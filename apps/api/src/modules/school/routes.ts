@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { prisma } from "@school/db";
 import { z } from "zod";
 
 export async function schoolRoutes(app: FastifyInstance) {
@@ -9,7 +10,7 @@ export async function schoolRoutes(app: FastifyInstance) {
     "/class-levels",
     { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
-      const levels = await request.prisma.classLevel.findMany({
+      const levels = await prisma.classLevel.findMany({
         where: { tenantId: request.currentTenant.id },
         orderBy: { order: "asc" },
       });
@@ -30,7 +31,7 @@ export async function schoolRoutes(app: FastifyInstance) {
         })
         .parse(request.body);
 
-      const level = await request.prisma.classLevel.create({
+      const level = await prisma.classLevel.create({
         data: { name, abbreviation, order, tenantId: request.currentTenant.id },
       });
 
@@ -43,7 +44,7 @@ export async function schoolRoutes(app: FastifyInstance) {
     "/academic-years",
     { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
-      const years = await request.prisma.academicYear.findMany({
+      const years = await prisma.academicYear.findMany({
         where: { tenantId: request.currentTenant.id },
         orderBy: { year: "desc" },
       });
@@ -64,7 +65,7 @@ export async function schoolRoutes(app: FastifyInstance) {
         })
         .parse(request.body);
 
-      const acy = await request.prisma.academicYear.create({
+      const acy = await prisma.academicYear.create({
         data: {
           year,
           startDate: new Date(startDate),
@@ -90,7 +91,7 @@ export async function schoolRoutes(app: FastifyInstance) {
         })
         .parse(request.body);
 
-      const section = await request.prisma.classSection.create({
+      const section = await prisma.classSection.create({
         data: {
           classLevelId,
           academicYearId,
@@ -112,7 +113,7 @@ export async function schoolRoutes(app: FastifyInstance) {
       const { id } = request.params as { id: string };
       const { name } = z.object({ name: z.string().min(1) }).parse(request.body);
 
-      const section = await request.prisma.classSection.update({
+      const section = await prisma.classSection.update({
         where: { id },
         data: { name },
         include: { classLevel: true, academicYear: true },
@@ -129,7 +130,7 @@ export async function schoolRoutes(app: FastifyInstance) {
     "/teachers",
     { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
-      const teachers = await request.prisma.user.findMany({
+      const teachers = await prisma.user.findMany({
         where: {
           memberships: {
             some: {
@@ -168,7 +169,7 @@ export async function schoolRoutes(app: FastifyInstance) {
       const { sectionId } = request.params as { sectionId: string };
       const { userId } = z.object({ userId: z.string() }).parse(request.body);
 
-      const section = await request.prisma.classSection.update({
+      const section = await prisma.classSection.update({
         where: { id: sectionId },
         data: { classTeacherId: userId },
         include: { classLevel: true, academicYear: true },
@@ -187,7 +188,7 @@ export async function schoolRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const { sectionId } = request.params as { sectionId: string };
 
-      const students = await request.prisma.student.findMany({
+      const students = await prisma.student.findMany({
         where: {
           tenantId: request.currentTenant.id,
           classSectionId: sectionId,
@@ -209,7 +210,7 @@ export async function schoolRoutes(app: FastifyInstance) {
         .object({ classSectionId: z.string() })
         .parse(request.body);
 
-      const student = await request.prisma.student.update({
+      const student = await prisma.student.update({
         where: { id: studentId },
         data: { classSectionId },
         include: { classSection: true },
