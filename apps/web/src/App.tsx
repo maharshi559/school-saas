@@ -97,15 +97,15 @@ const PlusIcon = () => (
   </svg>
 );
 
-const BookIcon = () => (
-  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+const BookIcon = ({ className = "h-5 w-5" }: { className?: string } = {}) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
-const WalletIcon = () => (
-  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+const WalletIcon = ({ className = "h-5 w-5" }: { className?: string } = {}) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <rect x="1" y="4" width="22" height="16" rx="2" ry="2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M1 10h22" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
@@ -423,7 +423,7 @@ function AppShell({
           <div className="flex items-center gap-3">
             <Avatar
               initials={(user.displayName || user.phone).substring(0, 2).toUpperCase()}
-              name={user.displayName}
+              name={user.displayName || undefined}
               className="h-9 w-9"
             />
             <div className="text-right">
@@ -693,6 +693,29 @@ function StudentsView({
   const [inlineEditField, setInlineEditField] = useState<"status" | "classSection" | null>(null);
   const [inlineEditValue, setInlineEditValue] = useState("");
   const [inlineUpdating, setInlineUpdating] = useState(false);
+  const [sections, setSections] = useState<any[]>([]);
+  const [loadingSections, setLoadingSections] = useState(false);
+
+  useEffect(() => {
+    if (!membership) return;
+    let mounted = true;
+    setLoadingSections(true);
+
+    apiFetch<{ items: any[] }>("/class-sections", { tenantId: membership.tenantId })
+      .then((r) => {
+        if (mounted) setSections(r.items);
+      })
+      .catch(() => {
+        if (mounted) setSections([]);
+      })
+      .finally(() => {
+        if (mounted) setLoadingSections(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [membership?.tenantId]);
 
   function addToast(message: string, type: "success" | "error" | "info" = "info") {
     const id = Math.random().toString(36).substring(2);
@@ -748,6 +771,7 @@ function StudentsView({
         await apiFetch("/students", {
           method: "POST",
           body: JSON.stringify(payload),
+          tenantId: membership.tenantId,
         });
         addToast(`Student "${formData.firstName} ${formData.lastName}" created successfully`, "success");
       }
@@ -831,7 +855,7 @@ function StudentsView({
         firstName: student.firstName,
         lastName: student.lastName,
         admissionNo: student.admissionNo,
-        dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().split("T")[0] : "",
+        dateOfBirth: (student.dateOfBirth ? new Date(student.dateOfBirth).toISOString().split("T")[0] : "") as string,
         classSectionId: student.classSectionId || "",
         enrollmentStatus: (student.enrollmentStatus as any) || "ENROLLED",
       });
@@ -928,13 +952,20 @@ function StudentsView({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="class-section">Class Section</Label>
-                  <Input
+                  <select
                     id="class-section"
                     value={formData.classSectionId}
                     onChange={(e) => setFormData({ ...formData, classSectionId: e.target.value })}
-                    placeholder="Grade 1 - A"
-                    disabled={submitting}
-                  />
+                    className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    disabled={submitting || loadingSections}
+                  >
+                    <option value="">Select a class and section</option>
+                    {sections.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.classLevel?.name} - {s.name} ({s.academicYear?.year})
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="enrollment">Enrollment Status</Label>
@@ -1103,7 +1134,7 @@ function StudentsView({
                                   : "bg-muted text-muted-foreground"
                             }`}
                           >
-                            {s.enrollmentStatus.toLowerCase()}
+                            {(s.enrollmentStatus || "").toLowerCase()}
                           </span>
                           <Button
                             size="sm"
@@ -1111,7 +1142,7 @@ function StudentsView({
                             onClick={() => {
                               setInlineEditingId(s.id);
                               setInlineEditField("status");
-                              setInlineEditValue(s.enrollmentStatus);
+                              setInlineEditValue(s.enrollmentStatus || "");
                             }}
                             className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                           >
@@ -1845,7 +1876,7 @@ function CommunicationView({ membership }: { membership: any }) {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label className="text-sm font-medium">Template Content</Label>
+                <p className="text-sm font-medium">Template Content</p>
                 <div className="mt-2 p-3 bg-muted rounded-md border border-border text-sm whitespace-pre-wrap">
                   {selectedTemplate.content}
                 </div>
@@ -1853,15 +1884,15 @@ function CommunicationView({ membership }: { membership: any }) {
 
               {selectedTemplate.content.includes("{{") && (
                 <div>
-                  <Label className="text-sm font-medium">Available Variables</Label>
+                  <p className="text-sm font-medium">Available Variables</p>
                   <div className="mt-2 text-xs text-muted-foreground space-y-1">
                     <p>Use these placeholders in your template:</p>
-                    <ul className="list-disc pl-5">
-                      <li>{{"{"}}{"{"}schoolName{"}"}{"}"}} - School name</li>
-                      <li>{{"{"}}{"{"}date{"}"}{"}"}} - Current date</li>
-                      <li>{{"{"}}{"{"}time{"}"}{"}"}} - Current time</li>
-                      <li>{{"{"}}{"{"}reason{"}"}{"}"}} - Custom reason</li>
-                      <li>{{"{"}}{"{"}name{"}"}{"}"}} - Recipient name</li>
+                    <ul className="list-disc pl-5 font-mono text-xs">
+                      <li>{'{{schoolName}}'} - School name</li>
+                      <li>{'{{date}}'} - Current date</li>
+                      <li>{'{{time}}'} - Current time</li>
+                      <li>{'{{reason}}'} - Custom reason</li>
+                      <li>{'{{name}}'} - Recipient name</li>
                     </ul>
                   </div>
                 </div>
