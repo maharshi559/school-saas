@@ -1,0 +1,565 @@
+// School Management SaaS — data model (MVP / Phase 1 slice)
+//
+// Tenancy: shared database, pool model. Every business table carries `tenantId`.
+// Isolation is enforced in code by the tenant-scoping Prisma extension in
+// ../src/tenant.ts — never hand-write `where: { tenantId }`. A future Postgres
+// Row-Level Security policy is layered on top as defence in depth (see migrations).
+//
+// `tenantId String @default("")` on scoped models: the extension always supplies
+// the real value at runtime, so the default keeps `tenantId` out of Create input
+// types (clean call sites). The "" sentinel can never persist — every scoped model
+// has a `tenant` FK, so a create with no tenant context fails the FK constraint
+// loudly instead of writing an orphan row.
+//
+// Global (non-tenant) tables: User, OtpChallenge. A user is one phone identity
+// that can belong to many schools; Membership is the tenant-scoped join.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────  Enums  ─────────────────────────────
+
+enum TenantStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+enum Role {
+  // App-level roles
+  APP_ADMIN
+  APP_SUPPORT
+
+  // Tenant-level roles
+  SCHOOL_ADMIN
+  PRINCIPAL
+  FINANCE_MANAGER
+  ACCOUNTANT
+  TEACHER
+  PARENT
+  STAFF
+}
+
+enum MembershipStatus {
+  PENDING_APPROVAL
+  ACTIVE
+  REJECTED
+  DISABLED
+}
+
+enum EnrollmentStatus {
+  ENROLLED
+  INACTIVE
+  GRADUATED
+  TRANSFERRED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum AttendanceSource {
+  WEB
+  OFFLINE_SYNC
+  IMPORT
+}
+
+enum ConsentScope {
+  GENERAL_DATA_PROCESSING
+  AI_PROCESSING
+  CHANNEL_WHATSAPP
+  CHANNEL_SMS
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CHECK
+  BANK_TRANSFER
+  CARD
+  UPI
+  OTHER
+}
+
+enum ExpenseCategory {
+  SALARY
+  UTILITIES
+  MAINTENANCE
+  SUPPLIES
+  TRANSPORTATION
+  FOOD
+  EQUIPMENT
+  OTHER
+}
+
+enum MessageType {
+  UPDATE
+  HOLIDAY
+  CLOSURE
+  ANNOUNCEMENT
+  EMERGENCY
+  OTHER
+}
+
+enum MessageChannel {
+  WHATSAPP
+  SMS
+  EMAIL
+}
+
+enum MessageStatus {
+  DRAFT
+  SCHEDULED
+  SENT
+  FAILED
+  DELIVERED
+}
+
+enum RecipientRole {
+  PARENT
+  TEACHER
+  STUDENT
+  ALL
+}
+
+// ─────────────────────────  Global identity  ──────────────────────
+
+model User {
+  id          String   @id @default(cuid())
+  phone       String   @unique
+  displayName String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  memberships Membership[]
+  guardian    Guardian[]
+  roles       UserRole[]
+}
+
+model UserRole {
+  id        String   @id @default(cuid())
+  userId    String
+  role      Role     // APP_ADMIN, APP_SUPPORT, etc. (app-level roles)
+  grantedAt DateTime @default(now())
+  grantedBy String?  // user id who granted this role
+  revokedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@index([userId])
+  @@index([role])
+}
+
+model OtpChallenge {
+  id        String    @id @default(cuid())
+  phone     String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int       @default(0)
+  consumedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([phone, createdAt])
+}
+
+// ─────────────────────────────  Tenant  ───────────────────────────
+
+model Tenant {
+  id         String       @id @default(cuid())
+  name       String
+  slug       String       @unique
+  schoolCode String       @unique
+  phone      String?
+  status     TenantStatus @default(TRIAL)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+  deletedAt  DateTime?
+
+  memberships    Membership[]
+  academicYears  AcademicYear[]
+  classLevels    ClassLevel[]
+  classSections  ClassSection[]
+  students       Student[]
+  guardians      Guardian[]
+  guardianLinks  GuardianStudent[]
+  consentRecords ConsentRecord[]
+  attendanceSessions AttendanceSession[]
+  attendanceRecords  AttendanceRecord[]
+  feeStructures     FeeStructure[]
+  studentFees       StudentFee[]
+  payments          Payment[]
+  expenses          Expense[]
+  financeSummary    FinanceSummary?
+  communicationTemplates CommunicationTemplate[]
+  communicationLog  CommunicationLog[]
+  whatsappConfig    WhatsAppConfig?
+}
+
+model Membership {
+  id               String           @id @default(cuid())
+  tenantId         String @default("")
+  userId           String
+  role             Role
+  status           MembershipStatus @default(PENDING_APPROVAL)
+  approvedByUserId String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId, role])
+  @@index([tenantId, status])
+}
+
+// ─────────────────────────  Academic structure  ───────────────────
+
+model AcademicYear {
+  id        String   @id @default(cuid())
+  tenantId  String @default("")
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  isCurrent Boolean  @default(false)
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  classSections ClassSection[]
+
+  @@unique([tenantId, name])
+}
+
+model ClassLevel {
+  id       String @id @default(cuid())
+  tenantId String @default("")
+  name     String
+  rank     Int
+
+  tenant   Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sections ClassSection[]
+
+  @@unique([tenantId, name])
+  @@index([tenantId, rank])
+}
+
+model ClassSection {
+  id             String  @id @default(cuid())
+  tenantId       String @default("")
+  classLevelId   String
+  academicYearId String
+  name           String
+  classTeacherId String?
+
+  tenant       Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  classLevel   ClassLevel   @relation(fields: [classLevelId], references: [id])
+  academicYear AcademicYear @relation(fields: [academicYearId], references: [id])
+  students     Student[]
+  attendanceSessions AttendanceSession[]
+
+  @@unique([tenantId, academicYearId, classLevelId, name])
+}
+
+// ────────────────────────────  Students  ──────────────────────────
+
+model Student {
+  id               String           @id @default(cuid())
+  tenantId         String @default("")
+  firstName        String
+  lastName         String           @default("")
+  admissionNo      String
+  dateOfBirth      DateTime?
+  enrollmentStatus EnrollmentStatus @default(ENROLLED)
+  classSectionId   String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deletedAt        DateTime?
+
+  tenant         Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  classSection   ClassSection?     @relation(fields: [classSectionId], references: [id])
+  guardianLinks  GuardianStudent[]
+  consentRecords ConsentRecord[]
+  attendanceRecords AttendanceRecord[]
+  studentFees    StudentFee[]
+
+  @@unique([tenantId, admissionNo])
+  @@index([tenantId, classSectionId])
+  @@index([tenantId, enrollmentStatus])
+}
+
+model Guardian {
+  id        String   @id @default(cuid())
+  tenantId  String @default("")
+  userId    String?
+  firstName String
+  lastName  String   @default("")
+  phone     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tenant         Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user           User?             @relation(fields: [userId], references: [id])
+  studentLinks   GuardianStudent[]
+  consentRecords ConsentRecord[]
+
+  @@index([tenantId, phone])
+}
+
+/// Many-to-many: a student has multiple guardians, a guardian has multiple children.
+model GuardianStudent {
+  id         String  @id @default(cuid())
+  tenantId   String @default("")
+  guardianId String
+  studentId  String
+  relation   String
+  isPrimary  Boolean @default(false)
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, guardianId, studentId])
+  @@index([tenantId, studentId])
+}
+
+/// DPDP Act: one row per (guardian, student, scope). Never collapse to a single flag.
+model ConsentRecord {
+  id          String       @id @default(cuid())
+  tenantId    String @default("")
+  guardianId  String
+  studentId   String
+  scope       ConsentScope
+  granted     Boolean
+  capturedVia String
+  capturedAt  DateTime     @default(now())
+  revokedAt   DateTime?
+
+  tenant   Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  guardian Guardian @relation(fields: [guardianId], references: [id], onDelete: Cascade)
+  student  Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, guardianId, studentId, scope])
+  @@index([tenantId, studentId, scope])
+}
+
+// ───────────────────────────  Attendance  ─────────────────────────
+// Offline-first: the client marks attendance locally and syncs later. Records
+// carry a client-generated id so a retried sync is idempotent.
+
+model AttendanceSession {
+  id             String           @id @default(cuid())
+  tenantId       String @default("")
+  classSectionId String
+  date           DateTime         @db.Date
+  takenByUserId  String
+  takenAt        DateTime         @default(now())
+  source         AttendanceSource @default(WEB)
+
+  tenant       Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  classSection ClassSection       @relation(fields: [classSectionId], references: [id])
+  records      AttendanceRecord[]
+
+  @@unique([tenantId, classSectionId, date])
+  @@index([tenantId, date])
+}
+
+model AttendanceRecord {
+  id             String           @id @default(cuid())
+  tenantId       String @default("")
+  sessionId      String
+  studentId      String
+  status         AttendanceStatus
+  note           String?
+  clientRecordId String?
+  markedAt       DateTime         @default(now())
+
+  tenant  Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  session AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  student Student           @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, sessionId, studentId])
+  @@unique([tenantId, clientRecordId])
+  @@index([tenantId, studentId, markedAt])
+}
+
+// ──────────────────────────  Finance & Fees  ──────────────────────
+
+model FeeStructure {
+  id          String   @id @default(cuid())
+  tenantId    String @default("")
+  name        String
+  description String?
+  amount      Decimal  @db.Decimal(10, 2)
+  dueDate     Int      // day of month (1-31)
+  frequency   String   @default("annual") // annual, semester, monthly
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime?
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  studentFees  StudentFee[]
+
+  @@index([tenantId, isActive])
+}
+
+model StudentFee {
+  id              String        @id @default(cuid())
+  tenantId        String @default("")
+  studentId       String
+  feeStructureId  String
+  amount          Decimal       @db.Decimal(10, 2)
+  dueDate         DateTime
+  status          PaymentStatus @default(PENDING)
+  amountPaid      Decimal       @db.Decimal(10, 2) @default(0)
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?
+
+  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student      Student        @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  feeStructure FeeStructure   @relation(fields: [feeStructureId], references: [id])
+  payments     Payment[]
+
+  @@unique([tenantId, studentId, feeStructureId, dueDate])
+  @@index([tenantId, studentId, status])
+  @@index([tenantId, dueDate, status])
+}
+
+model Payment {
+  id           String        @id @default(cuid())
+  tenantId     String @default("")
+  studentFeeId String
+  amount       Decimal       @db.Decimal(10, 2)
+  method       PaymentMethod @default(CASH)
+  reference    String?       // check number, transaction ID, etc.
+  notes        String?
+  paidBy       String?       // staff member name or user id
+  paidAt       DateTime      @default(now())
+  createdAt    DateTime      @default(now())
+  deletedAt    DateTime?
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  studentFee  StudentFee  @relation(fields: [studentFeeId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, studentFeeId])
+  @@index([tenantId, paidAt])
+}
+
+model Expense {
+  id       String           @id @default(cuid())
+  tenantId String @default("")
+  category ExpenseCategory
+  amount   Decimal          @db.Decimal(10, 2)
+  date     DateTime         @db.Date
+  vendor   String?
+  description String
+  reference String?
+  notes    String?
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  deletedAt DateTime?
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, date])
+  @@index([tenantId, category, date])
+}
+
+// Add finance relations to Tenant
+model FinanceSummary {
+  id              String  @id @default(cuid())
+  tenantId        String  @unique
+  totalFeeAmount  Decimal @db.Decimal(12, 2) @default(0) // total fees due
+  totalPaid       Decimal @db.Decimal(12, 2) @default(0) // total collected
+  totalExpenses   Decimal @db.Decimal(12, 2) @default(0) // total expenses
+  totalOverdue    Decimal @db.Decimal(12, 2) @default(0) // overdue fees
+  updatedAt       DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}
+
+// ─────────────────────  Communication & Messaging  ──────────────────
+
+model CommunicationTemplate {
+  id              String       @id @default(cuid())
+  tenantId        String @default("")
+  name            String
+  type            MessageType
+  channel         MessageChannel
+  title           String?
+  content         String       // template with {{variables}}
+  recipientRole   RecipientRole @default(PARENT)
+  description     String?
+  isActive        Boolean      @default(true)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  deletedAt       DateTime?
+
+  tenant Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  sentMessages   CommunicationLog[]
+
+  @@index([tenantId, type, channel])
+  @@index([tenantId, isActive])
+}
+
+model CommunicationLog {
+  id               String        @id @default(cuid())
+  tenantId         String @default("")
+  templateId       String?
+  channel          MessageChannel
+  recipientRole    RecipientRole
+  recipientPhone   String?       // specific phone if sent to individual
+  recipientCount   Int           @default(0) // total recipients
+  title            String?
+  content          String
+  status           MessageStatus @default(DRAFT)
+  sentBy           String?       // user id of sender
+  sentAt           DateTime?
+  deliveredAt      DateTime?
+  failureReason    String?
+  metadata         String?       // JSON with variables, phone numbers, etc.
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  tenant   Tenant                    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  template CommunicationTemplate?    @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status, sentAt])
+  @@index([tenantId, channel])
+  @@index([tenantId, recipientRole])
+}
+
+model WhatsAppConfig {
+  id              String  @id @default(cuid())
+  tenantId        String  @unique
+  businessPhoneId String  // WhatsApp Business Account Phone ID
+  accessToken     String  // API token (encrypted in production)
+  wabaId          String  // WhatsApp Business Account ID
+  isActive        Boolean @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+}

@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>School Management — shadcn Style</title>
+  <style>
+    :root {
+      --background: 0 0% 100%;
+      --foreground: 0 0% 3.6%;
+      --card: 0 0% 100%;
+      --card-foreground: 0 0% 3.6%;
+      --popover: 0 0% 100%;
+      --popover-foreground: 0 0% 3.6%;
+      --muted: 0 0% 96.1%;
+      --muted-foreground: 0 0% 45.1%;
+      --accent: 0 0% 9%;
+      --accent-foreground: 0 0% 100%;
+      --destructive: 0 84% 60%;
+      --destructive-foreground: 0 0% 100%;
+      --border: 0 0% 89.8%;
+      --input: 0 0% 89.8%;
+      --ring: 0 0% 3.6%;
+      --radius: 0.5rem;
+    }
+
+    [data-theme="dark"] {
+      --background: 0 0% 3.6%;
+      --foreground: 0 0% 98%;
+      --card: 0 0% 8%;
+      --card-foreground: 0 0% 98%;
+      --popover: 0 0% 8%;
+      --popover-foreground: 0 0% 98%;
+      --muted: 0 0% 14%;
+      --muted-foreground: 0 0% 63.9%;
+      --accent: 0 0% 98%;
+      --accent-foreground: 0 0% 3.6%;
+      --destructive: 0 84% 60%;
+      --destructive-foreground: 0 0% 100%;
+      --border: 0 0% 14%;
+      --input: 0 0% 14%;
+      --ring: 0 0% 83%;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: hsl(var(--background));
+      color: hsl(var(--foreground));
+      transition: background-color 0.2s, color 0.2s;
+    }
+
+    .canvas-container {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Header with Theme Toggle */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 40px;
+      padding: 20px;
+      background-color: hsl(var(--card));
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius) * 2);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background-color: hsl(var(--muted));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 4px;
+    }
+
+    .theme-btn {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background-color: transparent;
+      cursor: pointer;
+      border-radius: calc(var(--radius) - 2px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      transition: background-color 0.2s;
+    }
+
+    .theme-btn:hover {
+      background-color: hsl(var(--background));
+    }
+
+    .theme-btn.active {
+      background-color: hsl(var(--background));
+      color: hsl(var(--foreground));
+    }
+
+    /* Sections */
+    .flow-section {
+      margin-bottom: 40px;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid hsl(var(--border));
+    }
+
+    .screen-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+    }
+
+    .screen-card {
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius) * 2);
+      overflow: hidden;
+      background-color: hsl(var(--card));
+    }
+
+    .screen-frame {
+      width: 100%;
+      aspect-ratio: 9/16;
+      background-color: hsl(var(--background));
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+      gap: 0;
+      overflow: hidden;
+    }
+
+    .screen-frame.with-sidebar {
+      flex-direction: row;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      width: 200px;
+      background-color: hsl(var(--card));
+      border-right: 1px solid hsl(var(--border));
+      padding: 12px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .sidebar-item {
+      padding: 10px 12px;
+      border: none;
+      background-color: transparent;
+      color: hsl(var(--muted-foreground));
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      text-align: left;
+      border-left: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .sidebar-item:hover {
+      background-color: hsl(var(--muted));
+    }
+
+    .sidebar-item.active {
+      color: hsl(var(--foreground));
+      background-color: hsl(var(--muted));
+      border-left-color: hsl(var(--accent));
+    }
+
+    .sidebar-content {
+      flex: 1;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      overflow-y: auto;
+    }
+
+    .frame-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .frame-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: hsl(var(--foreground));
+    }
+
+    .frame-subtitle {
+      font-size: 12px;
+      color: hsl(var(--muted-foreground));
+      margin-top: 2px;
+    }
+
+    .input-field {
+      width: 100%;
+      height: 36px;
+      padding: 8px 12px;
+      border: 1px solid hsl(var(--input));
+      border-radius: var(--radius);
+      background-color: hsl(var(--background));
+      color: hsl(var(--foreground));
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    .input-field::placeholder {
+      color: hsl(var(--muted-foreground));
+    }
+
+    .button {
+      width: 100%;
+      height: 36px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: var(--radius);
+      background-color: hsl(var(--accent));
+      color: hsl(var(--accent-foreground));
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .button:hover {
+      opacity: 0.9;
+    }
+
+    .button.outline {
+      background-color: transparent;
+      border: 1px solid hsl(var(--border));
+      color: hsl(var(--foreground));
+    }
+
+    .button.outline:hover {
+      background-color: hsl(var(--muted));
+    }
+
+    .card-item {
+      background-color: hsl(var(--popover));
+      border: 1px solid hsl(var(--border));
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 8px;
+    }
+
+    .item-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: hsl(var(--foreground));
+    }
+
+    .item-subtitle {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+      margin-top: 4px;
+    }
+
+    .tab-group {
+      display: flex;
+      gap: 0;
+      margin-bottom: 12px;
+      border-bottom: 1px solid hsl(var(--border));
+    }
+
+    .tab {
+      padding: 8px 12px;
+      background-color: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: hsl(var(--muted-foreground));
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      color: hsl(var(--foreground));
+      border-bottom-color: hsl(var(--foreground));
+    }
+
+    .stat-row {
+      display: flex;
+      gap: 12px;
+      padding: 8px 0;
+    }
+
+    .stat {
+      flex: 1;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 600;
+      font-family: 'SF Mono', Monaco, monospace;
+      color: hsl(var(--foreground));
+    }
+
+    .chip {
+      display: inline-block;
+      padding: 4px 8px;
+      border: 1px solid hsl(var(--border));
+      border-radius: calc(var(--radius) - 2px);
+      font-size: 11px;
+      font-weight: 500;
+      margin-right: 4px;
+      margin-bottom: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .chip:hover {
+      background-color: hsl(var(--muted));
+    }
+
+    .chip.selected {
+      background-color: hsl(var(--accent));
+      color: hsl(var(--accent-foreground));
+      border-color: hsl(var(--accent));
+    }
+
+    .toggle-switch {
+      width: 40px;
+      height: 24px;
+      border-radius: 12px;
+      border: none;
+      background-color: hsl(var(--muted));
+      cursor: pointer;
+      transition: background-color 0.2s;
+      position: relative;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 10px;
+      background-color: hsl(var(--background));
+      top: 2px;
+      left: 2px;
+      transition: left 0.2s;
+    }
+
+    .toggle-switch.on {
+      background-color: hsl(var(--accent));
+    }
+
+    .toggle-switch.on::after {
+      left: 18px;
+    }
+
+    .screen-label {
+      padding: 12px;
+      font-size: 12px;
+      color: hsl(var(--foreground));
+      background-color: hsl(var(--muted));
+      border-top: 1px solid hsl(var(--border));
+    }
+
+    .label-note {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+      margin-top: 6px;
+    }
+
+    .alert {
+      padding: 12px;
+      border-radius: var(--radius);
+      border: 1px solid hsl(var(--border));
+      background-color: hsl(var(--muted));
+      margin-bottom: 12px;
+    }
+
+    .alert-title {
+      font-size: 12px;
+      font-weight: 500;
+      color: hsl(var(--destructive));
+      margin-bottom: 4px;
+    }
+
+    .alert-description {
+      font-size: 11px;
+      color: hsl(var(--muted-foreground));
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas-container">
+    <!-- Header with Theme Toggle -->
+    <header>
+      <h1>School Management</h1>
+      <div class="theme-toggle">
+        <button class="theme-btn active" data-theme="light" title="Light mode">☀️</button>
+        <button class="theme-btn" data-theme="dark" title="Dark mode">🌙</button>
+      </div>
+    </header>
+
+    <!-- LOGIN SCREENS -->
+    <div class="flow-section">
+      <h2 class="section-title">Authentication</h2>
+      <div class="screen-grid">
+        <!-- Login Screen -->
+        <div class="screen-card">
+          <div class="screen-frame">
+            <div style="text-align: center; margin-bottom: 16px;">
+              <div style="width: 40px; height: 40px; background-color: hsl(var(--accent)); border-radius: var(--radius); margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; color: hsl(var(--accent-foreground)); font-weight: 700; font-size: 18px;">S</div>
+              <h3 class="frame-title">Sign in</h3>
+              <p class="frame-subtitle">Enter your phone number</p>
+            </div>
+            <input class="input-field" type="tel" placeholder="+1 (555) 123-4001" value="9999900001" readonly />
+            <button class="button">Send code</button>
+          </div>
+          <div class="screen-label">
+            <div class="item-title"><strong>Main.dc.html</strong></div>
+            <div class="label-note">✓ Interactive: phone → OTP</div>
+          </div>
+        </div>
+
+        <!-- No School Alert -->
+        <div class="screen-card">
+          <div class="screen-frame">
+            <div class="alert" style="border-color: hsl(var(--destructive)); background-color: hsl(var(--destructive) / 0.1);">
+              <div class="alert-title">Not linked to a school</div>
+              <div class="alert-description">Ask your admin to add you or register with a school code</div>
+            </div>
+          </div>
+          <div class="screen-label">
+            <div class="item-title"><strong>NoSchoolYet.dc.html</strong></div>
+            <div class="label-note">Edge case: unlinked user</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ADMIN DASHBOARD -->
+    <div class="flow-section">
+      <h2 class="section-title">School Admin — Dashboard</h2>
+      <div class="screen-grid">
+        <!-- Admin Dashboard with Left Sidebar -->
+        <div class="screen-card">
+          <div class="screen-frame with-sidebar">
+            <!-- Left Sidebar Navigation -->
+            <div class="sidebar">
+              <button class="sidebar-item active">Dashboard</button>
+              <button class="sidebar-item">Students</button>
+              <button class="sidebar-item">Attendance</button>
+              <button class="sidebar-item">Consent</button>
+            </div>
+
+            <!-- Main Content Area -->
+            <div class="sidebar-content">
+              <div>
+                <h3 class="frame-title">Demo Public School</h3>
+                <p class="frame-subtitle">School Admin</p>
+              </div>
+
+              <div class="stat-row">
+                <div class="stat">
+                  <div class="stat-label">Students</div>
+                  <div class="stat-value">248</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-label">Teachers</div>
+                  <div class="stat-value">24</div>
+                </div>
+                <div class="stat">
+                  <div class="stat-label">Attendance</div>
+                  <div class="stat-value">96%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="screen-label">
+            <div class="item-title"><strong>AdminShell.dc.html</strong></div>
+            <div class="label-note">✓ Left sidebar nav: Dashboard, Students, Attendance, Consent</div>
+          </div>
+        </div>
+
+        <!-- Student Detail -->
+        <div class="screen-card">
+          <div class="screen-frame">
+            <div>
+              <h3 class="frame-title">Aarav Sharma</h3>
+              <p class="frame-subtitle">ADM10001 • Grade 1 A</p>
+            </div>
+
+            <div style="margin-top: 12px;">
+              <p class="item-title" style="margin: 0 0 8px 0;">Guardians</p>
+              <div class="card-item">
+                <div class="item-title">Priya Sharma</div>
+                <div class="item-subtitle">Mother (Primary)</div>
+              </div>
+            </div>
+
+            <div style="margin-top: 12px;">
+              <p class="item-title" style="margin: 0 0 8px 0;">Consent</p>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <div class="card-item" style="background-color: hsl(var(--muted)); border-color: hsl(var(--border));">
+                  <div class="item-title">General ✓</div>
+                </div>
+                <div class="card-item" style="background-color: hsl(var(--destructive) / 0.1); border-color: hsl(var(--destructive) / 0.3);">
+                  <div class="item-title" style="color: hsl(var(--destructive));">AI ✗</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="screen-label">
+            <div class="item-title"><strong>StudentDetail.dc.html</strong></div>
+            <div class="label-note">Student profile + consent</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TEACHER ATTENDANCE -->
+    <div class="flow-section">
+      <h2 class="section-title">Teacher — Attendance Marking (Phone)</h2>
+      <div class="screen-grid">
+        <div class="screen-card">
+          <div class="screen-frame">
+            <div class="frame-header">
+              <div>
+                <h3 class="frame-title">Grade 1 A</h3>
+                <p class="frame-subtitle">15 Jan 2026</p>
+              </div>
+            </div>
+
+            <div class="card-item">
+              <div class="item-title">Aarav Sharma</div>
+              <div class="item-subtitle">ADM10001</div>
+              <div style="margin-top: 8px;">
+                <button class="chip selected">P</button>
+                <button class="chip">A</button>
+                <button class="chip">L</button>
+                <button class="chip">E</button>
+              </div>
+            </div>
+
+            <div class="card-item">
+              <div class="item-title">Diya Patel</div>
+              <div class="item-subtitle">ADM10002</div>
+              <div style="margin-top: 8px;">
+                <button class="chip">P</button>
+                <button class="chip selected">A</button>
+                <button class="chip">L</button>
+                <button class="chip">E</button>
+              </div>
+            </div>
+
+            <button class="button" style="margin-top: 12px;">Confirm & submit</button>
+          </div>
+          <div class="screen-label">
+            <div class="item-title"><strong>AttendanceMarking.dc.html</strong></div>
+            <div class="label-note">✓ Interactive: status chips + explicit confirm</div>
+          </div>
+        </div>
+
+        <!-- Parent Consent -->
+        <div class="screen-card">
+          <div class="screen-frame">
+            <div>
+              <h3 class="frame-title">Consent Settings</h3>
+              <p class="frame-subtitle">Aarav Sharma</p>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <div>
+                <div class="item-title">General Data</div>
+                <div class="item-subtitle">Records & grades</div>
+              </div>
+              <button class="toggle-switch on"></button>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <div>
+                <div class="item-title">AI Processing</div>
+                <div class="item-subtitle">Predictions & insights</div>
+              </div>
+              <button class="toggle-switch"></button>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+              <div>
+                <div class="item-title">WhatsApp</div>
+                <div class="item-subtitle">Notifications</div>
+              </div>
+              <button class="toggle-switch on"></button>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+              <div>
+                <div class="item-title">SMS</div>
+                <div class="item-subtitle">Updates & alerts</div>
+              </div>
+              <button class="toggle-switch"></button>
+            </div>
+
+            <button class="button" style="margin-top: 12px;">Save changes</button>
+          </div>
+          <div class="screen-label">
+            <div class="item-title"><strong>Consent.dc.html</strong></div>
+            <div class="label-note">✓ Interactive: 4 independent toggles (DPDP)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notes -->
+    <div class="flow-section" style="margin-top: 60px; padding: 20px; background-color: hsl(var(--muted)); border-radius: calc(var(--radius) * 2); border: 1px solid hsl(var(--border));">
+      <h2 class="section-title" style="margin-bottom: 16px;">Design System</h2>
+      <p style="margin: 0 0 12px 0; color: hsl(var(--foreground));">This design follows the <strong>shadcn/ui aesthetic</strong>:</p>
+      <ul style="margin: 12px 0; padding-left: 20px; color: hsl(var(--muted-foreground)); line-height: 1.8; font-size: 13px;">
+        <li>Neutral color palette with proper dark/light mode support</li>
+        <li>Clean typography and minimal visual hierarchy</li>
+        <li>Proper contrast ratios for accessibility</li>
+        <li>All 10 interactive .dc.html artboards + canvas.json in <code>apps/web/design/</code></li>
+        <li>Theme toggle in header (light/dark mode) — add to main app</li>
+        <li>Multi-role support: Admin (desktop), Teacher (phone), Parent (phone)</li>
+        <li>Attendance confirmation is explicit (never auto-submit)</li>
+        <li>Consent is 4 independent toggles per DPDP requirements</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // Theme toggle functionality
+    const themeButtons = document.querySelectorAll('[data-theme]');
+    const htmlElement = document.documentElement;
+
+    themeButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const theme = btn.dataset.theme;
+        htmlElement.setAttribute('data-theme', theme);
+        localStorage.setItem('theme', theme);
+
+        themeButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+
+    // Restore theme preference
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    htmlElement.setAttribute('data-theme', savedTheme);
+    document.querySelector(`[data-theme="${savedTheme}"]`).classList.add('active');
+  </script>
+</body>
+</html>

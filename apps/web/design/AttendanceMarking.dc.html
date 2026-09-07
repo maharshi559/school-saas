@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f8fafc; }
+    button { cursor: pointer; }
+  </style>
+</helmet>
+<div style="width: 100%; height: 100%; display: flex; flex-direction: column; background: #f8fafc; padding: 16px;">
+
+  <!-- Header -->
+  <div style="background: white; border-radius: 8px; padding: 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+    <div>
+      <h1 style="margin: 0 0 4px 0; font-size: 18px; font-weight: 600; color: #0f172a;">Grade 1 A — Jan 15</h1>
+      <p style="margin: 0; font-size: 12px; color: #64748b;">Take attendance for 20 students</p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #64748b;">
+      <span style="width: 8px; height: 8px; border-radius: 50%; background: #dc2626;"></span>
+      Offline — will sync when online
+    </div>
+  </div>
+
+  <!-- Student List -->
+  <div style="flex: 1; overflow-y: auto;">
+    <sc-for list="{{students}}" as="student" hint-placeholder-count="3">
+      <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="flex: 1;">
+          <div style="font-size: 14px; font-weight: 500; color: #0f172a;">{{student.name}}</div>
+          <div style="font-size: 12px; font-family: 'SF Mono', Monaco, monospace; color: #94a3b8;">{{student.admNo}}</div>
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button onclick="{{markStudent}}" data-id="{{student.id}}" data-status="PRESENT" style="padding: 6px 10px; border-radius: 4px; border: 1px solid {{student.status === 'PRESENT' ? '#0d9488' : '#e2e8f0'}}; background: {{student.status === 'PRESENT' ? '#ecfdf5' : 'white'}}; color: {{student.status === 'PRESENT' ? '#0d9488' : '#64748b'}}; font-size: 12px; font-weight: 500; cursor: pointer;">P</button>
+          <button onclick="{{markStudent}}" data-id="{{student.id}}" data-status="ABSENT" style="padding: 6px 10px; border-radius: 4px; border: 1px solid {{student.status === 'ABSENT' ? '#dc2626' : '#e2e8f0'}}; background: {{student.status === 'ABSENT' ? '#fef2f2' : 'white'}}; color: {{student.status === 'ABSENT' ? '#dc2626' : '#64748b'}}; font-size: 12px; font-weight: 500; cursor: pointer;">A</button>
+          <button onclick="{{markStudent}}" data-id="{{student.id}}" data-status="LATE" style="padding: 6px 10px; border-radius: 4px; border: 1px solid {{student.status === 'LATE' ? '#f59e0b' : '#e2e8f0'}}; background: {{student.status === 'LATE' ? '#fffbeb' : 'white'}}; color: {{student.status === 'LATE' ? '#d97706' : '#64748b'}}; font-size: 12px; font-weight: 500; cursor: pointer;">L</button>
+          <button onclick="{{markStudent}}" data-id="{{student.id}}" data-status="EXCUSED" style="padding: 6px 10px; border-radius: 4px; border: 1px solid {{student.status === 'EXCUSED' ? '#8b5cf6' : '#e2e8f0'}}; background: {{student.status === 'EXCUSED' ? '#faf5ff' : 'white'}}; color: {{student.status === 'EXCUSED' ? '#7c3aed' : '#64748b'}}; font-size: 12px; font-weight: 500; cursor: pointer;">E</button>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <!-- Footer Actions -->
+  <div style="background: white; border-top: 1px solid #e2e8f0; padding: 16px; display: flex; gap: 8px; margin-top: 16px;">
+    <button style="flex: 1; height: 40px; background: #0d9488; color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer;">
+      Confirm &amp; submit
+    </button>
+    <button style="flex: 1; height: 40px; background: white; color: #64748b; border: 1px solid #e2e8f0; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer;">
+      Cancel
+    </button>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      marked: {}
+    };
+  }
+
+  renderVals() {
+    const students = [
+      { id: '1', name: 'Aarav Sharma', admNo: 'ADM10001', status: this.state.marked['1'] || null },
+      { id: '2', name: 'Diya Patel', admNo: 'ADM10002', status: this.state.marked['2'] || null },
+      { id: '3', name: 'Arjun Kumar', admNo: 'ADM10003', status: this.state.marked['3'] || null }
+    ];
+
+    return {
+      students,
+      markStudent: (e) => {
+        const id = e.target.dataset.id;
+        const status = e.target.dataset.status;
+        const marked = { ...this.state.marked, [id]: status };
+        this.setState({ marked });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

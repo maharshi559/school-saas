@@ -1,0 +1,129 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1200,
+      "h": 900,
+      "title": "Login"
+    },
+    {
+      "file": "NoSchoolYet.dc.html",
+      "x": 1360,
+      "y": 0,
+      "w": 900,
+      "h": 700,
+      "title": "No School Yet"
+    },
+    {
+      "file": "AdminShell.dc.html",
+      "x": 0,
+      "y": 1020,
+      "w": 1440,
+      "h": 900,
+      "title": "Admin Dashboard"
+    },
+    {
+      "file": "StudentDetail.dc.html",
+      "x": 1600,
+      "y": 1020,
+      "w": 1200,
+      "h": 900,
+      "title": "Student Profile"
+    },
+    {
+      "file": "TeacherHome.dc.html",
+      "x": 0,
+      "y": 2040,
+      "w": 390,
+      "h": 844,
+      "title": "Teacher Home"
+    },
+    {
+      "file": "AttendanceMarking.dc.html",
+      "x": 500,
+      "y": 2040,
+      "w": 390,
+      "h": 844,
+      "title": "Attendance Marking"
+    },
+    {
+      "file": "ParentHome.dc.html",
+      "x": 1000,
+      "y": 2040,
+      "w": 390,
+      "h": 844,
+      "title": "Parent Home"
+    },
+    {
+      "file": "ChildAttendance.dc.html",
+      "x": 1500,
+      "y": 2040,
+      "w": 390,
+      "h": 844,
+      "title": "Child Attendance"
+    },
+    {
+      "file": "Consent.dc.html",
+      "x": 2000,
+      "y": 2040,
+      "w": 390,
+      "h": 844,
+      "title": "Consent Management"
+    },
+    {
+      "file": "RoadmapStub.dc.html",
+      "x": 0,
+      "y": 3004,
+      "w": 600,
+      "h": 400,
+      "title": "Coming Soon"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "auth-group",
+      "x": 0,
+      "y": -120,
+      "w": 180,
+      "text": "Shared Auth Entry",
+      "kind": "note"
+    },
+    {
+      "id": "admin-group",
+      "x": 0,
+      "y": 900,
+      "w": 240,
+      "text": "School Admin — Desktop",
+      "kind": "note"
+    },
+    {
+      "id": "teacher-group",
+      "x": 0,
+      "y": 1920,
+      "w": 260,
+      "text": "Teacher — Phone-width, offline-first",
+      "kind": "note"
+    },
+    {
+      "id": "parent-group",
+      "x": 1000,
+      "y": 1920,
+      "w": 240,
+      "text": "Parent — Phone-width",
+      "kind": "note"
+    },
+    {
+      "id": "student-note",
+      "x": 1600,
+      "y": 900,
+      "w": 340,
+      "text": "Reached by clicking a student row — static reference, no cross-artboard link in this preview",
+      "kind": "note"
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}
