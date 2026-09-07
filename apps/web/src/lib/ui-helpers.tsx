@@ -156,3 +156,18 @@ export function InfoMessage({ message }: { message: string }) {
     </div>
   );
 }
+
+// Back Button Component - Mobile only
+export function BackButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      className="lg:hidden flex items-center gap-2 text-sm font-medium text-accent hover:text-accent/80 transition-colors mb-4"
+    >
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      </svg>
+      Back
+    </button>
+  );
+}

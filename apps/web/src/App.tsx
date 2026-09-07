@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "./components/ui/alert.js";
 import { Avatar } from "./components/ui/avatar.js";
 import { ToastContainer, type Toast } from "./components/Toast.js";
 import { LanguageProvider, useLanguage } from "./lib/i18n.js";
+import { BackButton } from "./lib/ui-helpers.js";
 import { EmptyState, LoadingState, FormField, StatusBadge, SuccessMessage, ErrorMessage } from "./lib/ui-helpers.js";
 
 type Student = {
@@ -742,26 +743,31 @@ function AppShell({
                 {activeView === "attendance" && <AttendanceView membership={membership} />}
                 {activeView === "finance" && <FinanceView membership={membership} />}
                 {activeView === "consent" && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Consent Management</CardTitle>
-                      <CardDescription>Manage DPDP consent preferences</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">
-                        Consent management coming soon. Parents can manage their data processing preferences through the parent portal.
-                      </p>
-                    </CardContent>
-                  </Card>
+                  <div className="space-y-6">
+                    <BackButton onClick={() => setActiveView("dashboard")} />
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-lg">Consent Management</CardTitle>
+                        <CardDescription>Manage DPDP consent preferences</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-muted-foreground">
+                          Consent management coming soon. Parents can manage their data processing preferences through the parent portal.
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
                 )}
                 {activeView === "communication" && <CommunicationView membership={membership} />}
                 {activeView === "members" && <MembersView membership={membership} />}
                 {activeView === "account" && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-2xl">My Account</CardTitle>
-                      <CardDescription>View and manage your profile</CardDescription>
-                    </CardHeader>
+                  <div className="space-y-6">
+                    <BackButton onClick={() => setActiveView("dashboard")} />
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="text-2xl">My Account</CardTitle>
+                        <CardDescription>View and manage your profile</CardDescription>
+                      </CardHeader>
                     <CardContent className="space-y-6">
                       <div className="flex items-center gap-4">
                         <Avatar
@@ -813,8 +819,12 @@ function AppShell({
                       </div>
                     </CardContent>
                   </Card>
+                    </div>
                 )}
                 {activeView === "settings" && (
+                  <div className="space-y-6">
+                    <BackButton onClick={() => setActiveView("dashboard")} />
+                    <Card>
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">Organization Settings</CardTitle>
@@ -826,6 +836,7 @@ function AppShell({
                       </p>
                     </CardContent>
                   </Card>
+                    </div>
                 )}
               </div>
             )}
