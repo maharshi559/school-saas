@@ -19,7 +19,7 @@ type Student = {
   enrollmentStatus?: string;
   classSection?: { id: string; name: string };
 };
-type SidebarView = "dashboard" | "students" | "teachers" | "classes" | "attendance" | "finance" | "consent";
+type SidebarView = "dashboard" | "students" | "teachers" | "classes" | "attendance" | "finance" | "consent" | "settings";
 
 const SunIcon = () => (
   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,6 +107,13 @@ const WalletIcon = () => (
   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <rect x="1" y="4" width="22" height="16" rx="2" ry="2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M1 10h22" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const SettingsIcon = () => (
+  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M12 1v6m0 6v6M4.22 4.22l4.24 4.24m5.08 5.08l4.24 4.24M1 12h6m6 0h6m-16.78 7.78l4.24-4.24m5.08-5.08l4.24-4.24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -301,7 +308,7 @@ function AppShell({
   const [activeView, setActiveViewState] = useState<SidebarView>(() => {
     try {
       const saved = localStorage.getItem("adminViewActive");
-      return (saved && ["dashboard", "students", "teachers", "classes", "attendance", "finance", "consent"].includes(saved)
+      return (saved && ["dashboard", "students", "teachers", "classes", "attendance", "finance", "consent", "settings"].includes(saved)
         ? saved
         : "dashboard") as SidebarView;
     } catch {
@@ -352,6 +359,7 @@ function AppShell({
     { id: "attendance", label: "Attendance", icon: <CheckSquareIcon /> },
     { id: "finance", label: "Finance", icon: <WalletIcon /> },
     { id: "consent", label: "Consent", icon: <ShieldIcon /> },
+    { id: "settings", label: "Org Settings", icon: <SettingsIcon /> },
   ];
 
   return (
@@ -472,6 +480,19 @@ function AppShell({
                     <CardContent>
                       <p className="text-sm text-muted-foreground">
                         Consent management coming soon. Parents can manage their data processing preferences through the parent portal.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+                {activeView === "settings" && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-lg">Organization Settings</CardTitle>
+                      <CardDescription>Manage school organization details</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Organization settings coming soon.
                       </p>
                     </CardContent>
                   </Card>
