@@ -279,8 +279,7 @@ export async function financeRoutes(app: FastifyInstance) {
       // Calculate totals by category
       const byCategory = expenses.reduce(
         (acc, e) => {
-          if (!acc[e.category]) acc[e.category] = 0;
-          acc[e.category] += Number(e.amount);
+          acc[e.category] = (acc[e.category] ?? 0) + Number(e.amount);
           return acc;
         },
         {} as Record<string, number>
@@ -378,8 +377,10 @@ export async function financeRoutes(app: FastifyInstance) {
     "/finance/expense-report",
     { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
-      const startDate = new Date(request.query.startDate as string || new Date().toISOString().split("T")[0]);
-      const endDate = new Date(request.query.endDate as string || new Date().toISOString().split("T")[0]);
+      const today = new Date().toISOString().split("T")[0] as string;
+      const q = request.query as Record<string, string | undefined>;
+      const startDate = new Date(q["startDate"] ?? today);
+      const endDate = new Date(q["endDate"] ?? today);
       endDate.setHours(23, 59, 59);
 
       const expenses = await prisma.expense.findMany({
@@ -392,9 +393,8 @@ export async function financeRoutes(app: FastifyInstance) {
 
       const byCategory = expenses.reduce(
         (acc, e) => {
-          if (!acc[e.category]) acc[e.category] = { count: 0, total: 0 };
-          acc[e.category].count += 1;
-          acc[e.category].total += Number(e.amount);
+          const entry = acc[e.category] ?? { count: 0, total: 0 };
+          acc[e.category] = { count: entry.count + 1, total: entry.total + Number(e.amount) };
           return acc;
         },
         {} as Record<string, { count: number; total: number }>

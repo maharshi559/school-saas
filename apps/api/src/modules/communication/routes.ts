@@ -138,28 +138,28 @@ export async function communicationRoutes(app: FastifyInstance) {
       let recipientCount = 0;
       if (recipientRole === "PARENT") {
         const guardians = await prisma.guardian.findMany({
-          where: { tenantId: request.tenantId, userId: { not: null } },
+          where: { tenantId: request.tenant!.id, userId: { not: null } },
         });
         recipientCount = guardians.length;
       } else if (recipientRole === "TEACHER") {
         const teachers = await prisma.membership.findMany({
-          where: { tenantId: request.tenantId, role: "TEACHER", status: "ACTIVE" },
+          where: { tenantId: request.tenant!.id, role: "TEACHER", status: "ACTIVE" },
         });
         recipientCount = teachers.length;
       } else if (recipientRole === "STUDENT") {
         const students = await prisma.student.findMany({
-          where: { tenantId: request.tenantId, deletedAt: null },
+          where: { tenantId: request.tenant!.id, deletedAt: null },
         });
         recipientCount = students.length;
       } else if (recipientRole === "ALL") {
         const guardians = await prisma.guardian.findMany({
-          where: { tenantId: request.tenantId, userId: { not: null } },
+          where: { tenantId: request.tenant!.id, userId: { not: null } },
         });
         const teachers = await prisma.membership.findMany({
-          where: { tenantId: request.tenantId, role: "TEACHER", status: "ACTIVE" },
+          where: { tenantId: request.tenant!.id, role: "TEACHER", status: "ACTIVE" },
         });
         const students = await prisma.student.findMany({
-          where: { tenantId: request.tenantId, deletedAt: null },
+          where: { tenantId: request.tenant!.id, deletedAt: null },
         });
         recipientCount = guardians.length + teachers.length + students.length;
       }

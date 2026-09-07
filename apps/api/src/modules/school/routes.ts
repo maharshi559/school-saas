@@ -11,7 +11,7 @@ export async function schoolRoutes(app: FastifyInstance) {
     { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
       const levels = await prisma.classLevel.findMany({
-        where: { tenantId: request.tenant.id },
+        where: { tenantId: request.tenant!.id },
         orderBy: { rank: "asc" },
       });
       return reply.send({ items: levels });
@@ -31,7 +31,7 @@ export async function schoolRoutes(app: FastifyInstance) {
         .parse(request.body);
 
       const level = await prisma.classLevel.create({
-        data: { name, rank, tenantId: request.tenant.id },
+        data: { name, rank, tenantId: request.tenant!.id },
       });
 
       return reply.code(201).send(level);
@@ -44,7 +44,7 @@ export async function schoolRoutes(app: FastifyInstance) {
     { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
       const years = await prisma.academicYear.findMany({
-        where: { tenantId: request.tenant.id },
+        where: { tenantId: request.tenant!.id },
         orderBy: { name: "desc" },
       });
       return reply.send({ items: years });
@@ -69,7 +69,7 @@ export async function schoolRoutes(app: FastifyInstance) {
           name: year,
           startDate: new Date(startDate),
           endDate: new Date(endDate),
-          tenantId: request.tenant.id,
+          tenantId: request.tenant!.id,
         },
       });
 
@@ -95,7 +95,7 @@ export async function schoolRoutes(app: FastifyInstance) {
           classLevelId,
           academicYearId,
           name,
-          tenantId: request.tenant.id,
+          tenantId: request.tenant!.id,
         },
         include: { classLevel: true, academicYear: true },
       });
@@ -113,7 +113,7 @@ export async function schoolRoutes(app: FastifyInstance) {
       const { name } = z.object({ name: z.string().min(1) }).parse(request.body);
 
       const section = await prisma.classSection.update({
-        where: { id, tenantId: request.tenant.id },
+        where: { id, tenantId: request.tenant!.id },
         data: { name },
         include: { classLevel: true, academicYear: true },
       });
@@ -133,7 +133,7 @@ export async function schoolRoutes(app: FastifyInstance) {
         where: {
           memberships: {
             some: {
-              tenantId: request.tenant.id,
+              tenantId: request.tenant!.id,
               role: "TEACHER",
               status: "ACTIVE",
             },
@@ -142,7 +142,7 @@ export async function schoolRoutes(app: FastifyInstance) {
         include: {
           memberships: {
             where: {
-              tenantId: request.tenant.id,
+              tenantId: request.tenant!.id,
               role: "TEACHER",
             },
           },
@@ -189,7 +189,7 @@ export async function schoolRoutes(app: FastifyInstance) {
 
       const students = await prisma.student.findMany({
         where: {
-          tenantId: request.tenant.id,
+          tenantId: request.tenant!.id,
           classSectionId: sectionId,
         },
         include: { classSection: true },

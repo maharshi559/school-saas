@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { prisma } from "@school/db";
+import { prisma, systemPrisma } from "@school/db";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 
@@ -13,12 +13,11 @@ export async function userRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const { phone } = z.object({ phone: z.string() }).parse(request.body);
 
+      const tenantId = request.tenant!.id;
+
       // Check if user already exists in the school
       const existingMembership = await prisma.membership.findFirst({
-        where: {
-          tenantId: request.tenant.id,
-          user: { phone },
-        },
+        where: { tenantId, user: { phone } },
       });
 
       if (existingMembership) {
@@ -27,11 +26,7 @@ export async function userRoutes(app: FastifyInstance) {
 
       // Check if invite already exists
       const existingInvite = await prisma.userInvite.findFirst({
-        where: {
-          tenantId: request.tenant.id,
-          phone,
-          status: { in: ["PENDING", "ACCEPTED"] },
-        },
+        where: { tenantId, phone, status: { in: ["PENDING", "ACCEPTED"] } },
       });
 
       if (existingInvite) {
@@ -41,20 +36,17 @@ export async function userRoutes(app: FastifyInstance) {
       const token = randomBytes(32).toString("hex");
       const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
-      const invite = await prisma.userInvite.create({
-        data: {
-          tenantId: request.tenant.id,
-          phone,
-          token,
-          createdBy: request.user.id,
-          expiresAt,
-        },
-      });
+      const [invite, tenant] = await Promise.all([
+        prisma.userInvite.create({
+          data: { tenantId, phone, token, createdBy: request.currentUser!.id, expiresAt },
+        }),
+        systemPrisma.tenant.findUnique({ where: { id: tenantId }, select: { schoolCode: true } }),
+      ]);
 
       return reply.code(201).send({
         id: invite.id,
         phone: invite.phone,
-        inviteLink: `${process.env.VITE_APP_URL || "http://localhost:5173"}/register?token=${token}&schoolCode=${request.tenant.schoolCode}`,
+        inviteLink: `${process.env.VITE_APP_URL || "http://localhost:5173"}/register?token=${token}&schoolCode=${tenant?.schoolCode}`,
       });
     }
   );
@@ -66,7 +58,7 @@ export async function userRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const memberships = await prisma.membership.findMany({
         where: {
-          tenantId: request.tenant.id,
+          tenantId: request.tenant!.id,
           status: "PENDING_APPROVAL",
         },
         include: {
@@ -102,7 +94,7 @@ export async function userRoutes(app: FastifyInstance) {
         where: { id: memberId },
       });
 
-      if (!membership || membership.tenantId !== request.tenant.id) {
+      if (!membership || membership.tenantId !== request.tenant!.id) {
         return reply.code(404).send({ error: "Member not found" });
       }
 
@@ -111,7 +103,7 @@ export async function userRoutes(app: FastifyInstance) {
         data: {
           status: "ACTIVE",
           role: role as any,
-          approvedByUserId: request.user.id,
+          approvedByUserId: request.currentUser!.id,
         },
       });
 
@@ -130,7 +122,7 @@ export async function userRoutes(app: FastifyInstance) {
         where: { id: memberId },
       });
 
-      if (!membership || membership.tenantId !== request.tenant.id) {
+      if (!membership || membership.tenantId !== request.tenant!.id) {
         return reply.code(404).send({ error: "Member not found" });
       }
 

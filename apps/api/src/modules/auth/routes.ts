@@ -73,7 +73,7 @@ export async function authRoutes(app: FastifyInstance) {
         memberships: user.memberships.map((m) => ({
           tenantId: m.tenantId,
           tenantName: m.tenant.name,
-          role: m.role,
+          role: m.role as any,
           status: m.status,
         })),
       },

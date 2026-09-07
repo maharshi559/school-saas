@@ -155,10 +155,11 @@ model User {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  memberships Membership[]
-  guardian    Guardian[]
-  roles       UserRole[]
-  examScores  ExamScore[]
+  memberships   Membership[]
+  guardian      Guardian[]
+  roles         UserRole[]
+  examScores    ExamScore[]
+  featureFlagUpdates FeatureFlag[]
 }
 
 model UserRole {
@@ -221,6 +222,7 @@ model Tenant {
   communicationTemplates CommunicationTemplate[]
   communicationLog  CommunicationLog[]
   whatsappConfig    WhatsAppConfig?
+  featureFlags      FeatureFlag[]
 }
 
 model Membership {
@@ -618,4 +620,27 @@ model WhatsAppConfig {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
 
   @@index([tenantId])
+}
+
+// ───────────────────────────  Feature Flags  ───────────────────────────
+
+/// Global feature flags controlled by APP_ADMIN.
+/// tenantId = null  → platform-wide default (on or off for everyone).
+/// tenantId = <id>  → override for that specific tenant only.
+model FeatureFlag {
+  id          String   @id @default(cuid())
+  key         String   // e.g. "ATTENDANCE", "EXAM_SCORES", "AI_INSIGHTS"
+  enabled     Boolean  @default(true)
+  tenantId    String?  // null = global; set = per-tenant override
+  description String?
+  updatedByUserId String? // APP_ADMIN who last changed it
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  updatedBy   User?    @relation(fields: [updatedByUserId], references: [id], onDelete: SetNull)
+
+  @@unique([key, tenantId]) // one record per key per scope
+  @@index([tenantId])
+  @@index([key])
 }

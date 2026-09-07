@@ -144,9 +144,9 @@ export async function attendanceRoutes(app: FastifyInstance) {
           records.map((r) =>
             prisma.attendanceRecord.upsert({
               where: {
-                tenantId_sessionId_studentId: {
-                  sessionId: session!.id,
-                  studentId: r.studentId,
+                tenantId_clientRecordId: {
+                  tenantId: request.tenant!.id,
+                  clientRecordId: r.clientRecordId ?? "",
                 },
               },
               update: {

@@ -2,6 +2,9 @@ import type { FastifyInstance } from "fastify";
 import { prisma } from "@school/db";
 import { z } from "zod";
 
+// prisma.examScore is available after migration; cast until then
+const db = prisma as any;
+
 export async function examScoresRoutes(app: FastifyInstance) {
   // ────────────────────── Exam Scores CRUD ──────────────────────
 
@@ -21,21 +24,16 @@ export async function examScoresRoutes(app: FastifyInstance) {
         })
         .parse(request.body);
 
-      // Verify student belongs to the school
-      const student = await prisma.student.findUnique({
-        where: { id: studentId },
-      });
-
-      if (!student || student.tenantId !== request.tenant.id) {
+      const student = await prisma.student.findUnique({ where: { id: studentId } });
+      if (!student || student.tenantId !== request.tenant!.id) {
         return reply.code(404).send({ error: "Student not found" });
       }
 
-      // Calculate percentage
       const percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
 
-      const examScore = await prisma.examScore.create({
+      const examScore = await db.examScore.create({
         data: {
-          tenantId: request.tenant.id,
+          tenantId: request.tenant!.id,
           studentId,
           subject,
           examName,
@@ -43,7 +41,7 @@ export async function examScoresRoutes(app: FastifyInstance) {
           maxScore: parseFloat(maxScore.toFixed(2)),
           percentage: parseFloat(percentage.toFixed(2)),
           remarks: remarks || null,
-          createdByUserId: request.user.id,
+          createdByUserId: request.currentUser!.id,
         },
       });
 
@@ -51,50 +49,36 @@ export async function examScoresRoutes(app: FastifyInstance) {
     }
   );
 
-  // Get exam scores for a student (all roles can view)
+  // Get exam scores for a student (all roles — parents restricted to own children)
   app.get(
     "/students/:studentId/exam-scores",
     { preHandler: [app.authenticate, app.tenantScope()] },
     async (request, reply) => {
       const { studentId } = request.params as { studentId: string };
+      const tenantId = request.tenant!.id;
 
-      // Verify student belongs to the school
-      const student = await prisma.student.findUnique({
-        where: { id: studentId },
-      });
-
-      if (!student || student.tenantId !== request.tenant.id) {
+      const student = await prisma.student.findUnique({ where: { id: studentId } });
+      if (!student || student.tenantId !== tenantId) {
         return reply.code(404).send({ error: "Student not found" });
       }
 
-      // Check parent permissions: parents can only view their own children's scores
-      if (request.membership?.role === "PARENT") {
+      // Parents can only view their own children's scores
+      if ((request.tenant!.role as string) === "PARENT") {
         const isGuardian = await prisma.guardianStudent.findFirst({
           where: {
-            tenantId: request.tenant.id,
+            tenantId,
             studentId,
-            guardian: {
-              userId: request.user.id,
-            },
+            guardian: { userId: request.currentUser!.id },
           },
         });
-
         if (!isGuardian) {
           return reply.code(403).send({ error: "You can only view your own child's scores" });
         }
       }
 
-      const examScores = await prisma.examScore.findMany({
-        where: {
-          tenantId: request.tenant.id,
-          studentId,
-          deletedAt: null,
-        },
-        include: {
-          createdBy: {
-            select: { id: true, displayName: true, phone: true },
-          },
-        },
+      const examScores = await db.examScore.findMany({
+        where: { tenantId, studentId, deletedAt: null },
+        include: { createdBy: { select: { id: true, displayName: true, phone: true } } },
         orderBy: { createdAt: "desc" },
       });
 
@@ -102,7 +86,7 @@ export async function examScoresRoutes(app: FastifyInstance) {
     }
   );
 
-  // Get exam scores by subject and exam (for analytics)
+  // List scores with filters (non-parent roles)
   app.get(
     "/exam-scores",
     { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN", "PRINCIPAL", "TEACHER"])] },
@@ -113,47 +97,25 @@ export async function examScoresRoutes(app: FastifyInstance) {
         classSectionId?: string;
       };
 
-      const whereClause: any = {
-        tenantId: request.tenant.id,
-        deletedAt: null,
-      };
+      const where: any = { tenantId: request.tenant!.id, deletedAt: null };
+      if (subject) where.subject = subject;
+      if (examName) where.examName = examName;
+      if (classSectionId) where.student = { classSectionId };
 
-      if (subject) whereClause.subject = subject;
-      if (examName) whereClause.examName = examName;
-
-      let query: any = {
-        where: whereClause,
+      const examScores = await db.examScore.findMany({
+        where,
         include: {
-          student: {
-            select: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              admissionNo: true,
-              classSectionId: true,
-            },
-          },
-          createdBy: {
-            select: { id: true, displayName: true },
-          },
+          student: { select: { id: true, firstName: true, lastName: true, admissionNo: true, classSectionId: true } },
+          createdBy: { select: { id: true, displayName: true } },
         },
         orderBy: { createdAt: "desc" },
-      };
-
-      // Filter by class section if provided
-      if (classSectionId) {
-        query.where.student = {
-          classSectionId,
-        };
-      }
-
-      const examScores = await prisma.examScore.findMany(query);
+      });
 
       return reply.send(examScores);
     }
   );
 
-  // Update exam score (non-parent roles only)
+  // Update exam score
   app.patch(
     "/exam-scores/:scoreId",
     { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN", "PRINCIPAL", "TEACHER"])] },
@@ -169,136 +131,94 @@ export async function examScoresRoutes(app: FastifyInstance) {
         })
         .parse(request.body);
 
-      const examScore = await prisma.examScore.findUnique({
-        where: { id: scoreId },
-      });
-
-      if (!examScore || examScore.tenantId !== request.tenant.id) {
+      const existing = await db.examScore.findUnique({ where: { id: scoreId } });
+      if (!existing || existing.tenantId !== request.tenant!.id) {
         return reply.code(404).send({ error: "Exam score not found" });
       }
 
-      // Calculate new percentage if score or maxScore changed
-      let percentage = examScore.percentage;
-      if (score !== undefined && maxScore !== undefined) {
-        percentage = maxScore > 0 ? (score / maxScore) * 100 : 0;
-      } else if (score !== undefined && maxScore === undefined) {
-        percentage = examScore.maxScore > 0 ? (score / examScore.maxScore) * 100 : 0;
-      } else if (score === undefined && maxScore !== undefined) {
-        percentage = maxScore > 0 ? (examScore.score.toNumber() / maxScore) * 100 : 0;
-      }
+      const newScore = score ?? Number(existing.score);
+      const newMax = maxScore ?? Number(existing.maxScore);
+      const percentage = newMax > 0 ? (newScore / newMax) * 100 : 0;
 
-      const updated = await prisma.examScore.update({
+      const updated = await db.examScore.update({
         where: { id: scoreId },
         data: {
-          score: score ? parseFloat(score.toFixed(2)) : undefined,
-          maxScore: maxScore ? parseFloat(maxScore.toFixed(2)) : undefined,
+          score: parseFloat(newScore.toFixed(2)),
+          maxScore: parseFloat(newMax.toFixed(2)),
           percentage: parseFloat(percentage.toFixed(2)),
-          remarks: remarks !== undefined ? remarks : undefined,
-          subject: subject || undefined,
-          examName: examName || undefined,
-          updatedAt: new Date(),
+          ...(remarks !== undefined && { remarks }),
+          ...(subject && { subject }),
+          ...(examName && { examName }),
         },
-        include: {
-          createdBy: { select: { id: true, displayName: true } },
-        },
+        include: { createdBy: { select: { id: true, displayName: true } } },
       });
 
       return reply.send(updated);
     }
   );
 
-  // Delete exam score (soft delete)
+  // Soft-delete exam score (admin/principal only)
   app.delete(
     "/exam-scores/:scoreId",
     { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN", "PRINCIPAL"])] },
     async (request, reply) => {
       const { scoreId } = request.params as { scoreId: string };
 
-      const examScore = await prisma.examScore.findUnique({
-        where: { id: scoreId },
-      });
-
-      if (!examScore || examScore.tenantId !== request.tenant.id) {
+      const existing = await db.examScore.findUnique({ where: { id: scoreId } });
+      if (!existing || existing.tenantId !== request.tenant!.id) {
         return reply.code(404).send({ error: "Exam score not found" });
       }
 
-      const deleted = await prisma.examScore.update({
-        where: { id: scoreId },
-        data: { deletedAt: new Date() },
-      });
-
-      return reply.send(deleted);
+      await db.examScore.update({ where: { id: scoreId }, data: { deletedAt: new Date() } });
+      return reply.code(204).send();
     }
   );
 
-  // Get exam statistics for a class section
+  // Class-level exam statistics
   app.get(
     "/exam-statistics/:classSectionId",
     { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN", "PRINCIPAL", "TEACHER"])] },
     async (request, reply) => {
       const { classSectionId } = request.params as { classSectionId: string };
       const { examName, subject } = request.query as { examName?: string; subject?: string };
+      const tenantId = request.tenant!.id;
 
-      // Verify class section belongs to school
-      const classSection = await prisma.classSection.findUnique({
-        where: { id: classSectionId },
-      });
-
-      if (!classSection || classSection.tenantId !== request.tenant.id) {
+      const classSection = await prisma.classSection.findUnique({ where: { id: classSectionId } });
+      if (!classSection || classSection.tenantId !== tenantId) {
         return reply.code(404).send({ error: "Class section not found" });
       }
 
-      const whereClause: any = {
-        tenantId: request.tenant.id,
-        student: { classSectionId },
-        deletedAt: null,
-      };
+      const where: any = { tenantId, student: { classSectionId }, deletedAt: null };
+      if (examName) where.examName = examName;
+      if (subject) where.subject = subject;
 
-      if (examName) whereClause.examName = examName;
-      if (subject) whereClause.subject = subject;
-
-      const examScores = await prisma.examScore.findMany({
-        where: whereClause,
-        select: {
-          percentage: true,
-          score: true,
-          maxScore: true,
-          subject: true,
-          examName: true,
-          student: { select: { id: true } },
-        },
+      const scores: any[] = await db.examScore.findMany({
+        where,
+        select: { percentage: true, subject: true, examName: true },
       });
 
-      // Calculate statistics by exam and subject
-      const stats: any = {};
+      type Stat = { examName: string; subject: string; count: number; total: number; max: number; min: number };
+      const statsMap: Record<string, Stat> = {};
 
-      for (const score of examScores) {
-        const key = `${score.examName}_${score.subject}`;
-        if (!stats[key]) {
-          stats[key] = {
-            examName: score.examName,
-            subject: score.subject,
-            count: 0,
-            totalScore: 0,
-            avgPercentage: 0,
-            maxPercentage: 0,
-            minPercentage: 100,
-          };
+      for (const s of scores) {
+        const key = `${s.examName}__${s.subject}`;
+        const pct = Number(s.percentage);
+        if (!statsMap[key]) {
+          statsMap[key] = { examName: s.examName, subject: s.subject, count: 0, total: 0, max: 0, min: 100 };
         }
-
-        stats[key].count++;
-        stats[key].totalScore += score.percentage.toNumber();
-        stats[key].maxPercentage = Math.max(stats[key].maxPercentage, score.percentage.toNumber());
-        stats[key].minPercentage = Math.min(stats[key].minPercentage, score.percentage.toNumber());
+        const entry = statsMap[key]!;
+        entry.count++;
+        entry.total += pct;
+        entry.max = Math.max(entry.max, pct);
+        entry.min = Math.min(entry.min, pct);
       }
 
-      // Calculate averages
-      for (const key in stats) {
-        stats[key].avgPercentage = stats[key].count > 0 ? stats[key].totalScore / stats[key].count : 0;
-        stats[key].avgPercentage = parseFloat(stats[key].avgPercentage.toFixed(2));
-      }
+      const result = Object.values(statsMap).map((s) => ({
+        ...s,
+        avg: s.count > 0 ? parseFloat((s.total / s.count).toFixed(2)) : 0,
+      }));
 
-      return reply.send(Object.values(stats));
+      return reply.send(result);
     }
   );
 }

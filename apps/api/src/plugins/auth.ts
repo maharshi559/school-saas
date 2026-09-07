@@ -21,6 +21,11 @@ declare module "fastify" {
      * scope so `@school/db`'s `prisma` is filtered for the rest of the request.
      */
     tenantScope: (roles?: Role[]) => preHandlerHookHandler;
+    /**
+     * preHandler factory: require the caller to hold one of the given app-level
+     * roles (APP_ADMIN, APP_SUPPORT). No tenant context needed.
+     */
+    requireAppRole: (roles: ("APP_ADMIN" | "APP_SUPPORT")[]) => preHandlerHookHandler;
   }
   interface FastifyRequest {
     currentUser?: RequestUser;
@@ -94,6 +99,22 @@ export const authPlugin = fp(
         }
         request.tenant = { id: tenantId, role: membership.role };
         enterTenantContext(tenantId);
+      };
+    });
+
+    app.decorate("requireAppRole", function (roles: ("APP_ADMIN" | "APP_SUPPORT")[]) {
+      return async function (request: FastifyRequest, reply: FastifyReply) {
+        if (!request.currentUser) {
+          return reply.code(401).send({ error: "unauthorized" });
+        }
+        const userRoles = await systemPrisma.userRole.findMany({
+          where: { userId: request.currentUser.id, revokedAt: null },
+          select: { role: true },
+        });
+        const hasRole = userRoles.some((r) => roles.includes(r.role as any));
+        if (!hasRole) {
+          return reply.code(403).send({ error: "forbidden", message: "App-level role required" });
+        }
       };
     });
   },
