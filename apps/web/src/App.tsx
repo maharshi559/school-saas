@@ -50,6 +50,13 @@ const UsersIcon = ({ className = "h-5 w-5" }: { className?: string } = {}) => (
   </svg>
 );
 
+const TeachersIcon = ({ className = "h-5 w-5" }: { className?: string } = {}) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path d="M12 3L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-4z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M12 12v5M9 15h6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 const CheckSquareIcon = () => (
   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <polyline points="9 11 12 14 22 4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -341,7 +348,7 @@ function AppShell({
   const sidebarItems: Array<{ id: SidebarView; label: string; icon: React.ReactNode }> = [
     { id: "dashboard", label: "Dashboard", icon: <DashboardIcon /> },
     { id: "students", label: "Students", icon: <UsersIcon /> },
-    { id: "teachers", label: "Teachers", icon: <UsersIcon /> },
+    { id: "teachers", label: "Teachers", icon: <TeachersIcon /> },
     { id: "classes", label: "Classes", icon: <BookIcon /> },
     { id: "attendance", label: "Attendance", icon: <CheckSquareIcon /> },
     { id: "finance", label: "Finance", icon: <WalletIcon /> },
