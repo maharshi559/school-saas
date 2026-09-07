@@ -156,6 +156,21 @@ const PencilIcon = ({ className = "h-4 w-4" }: { className?: string } = {}) => (
   </svg>
 );
 
+const BellIcon = ({ className = "h-5 w-5" }: { className?: string } = {}) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M13.73 21a2 2 0 0 1-3.46 0" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const SparklesIcon = ({ className = "h-4 w-4" }: { className?: string } = {}) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M5 3l.75 2.25L8 6l-2.25.75L5 9l-.75-2.25L2 6l2.25-.75z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M19 15l.75 2.25L22 18l-2.25.75L19 21l-.75-2.25L16 18l2.25-.75z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 export default function App() {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [booting, setBooting] = useState(true);
@@ -513,6 +528,63 @@ function AppShell({
   const [note, setNote] = useState<string>();
   const [showOrgSwitch, setShowOrgSwitch] = useState(false);
 
+  // ── In-app notifications ─────────────────────────────────────────────────
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
+
+  useEffect(() => {
+    if (!tenantId) return;
+    let cancelled = false;
+
+    async function connect() {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000"}/api/v1/notifications/stream`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (!res.body || cancelled) return;
+        const reader = res.body.getReader();
+        const dec = new TextDecoder();
+        let buf = "";
+        while (!cancelled) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buf += dec.decode(value, { stream: true });
+          const lines = buf.split("\n");
+          buf = lines.pop() ?? "";
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            try {
+              const n = JSON.parse(line.slice(6));
+              if (!n?.id) continue;
+              setNotifications((prev) => [n, ...prev.filter((x) => x.id !== n.id)]);
+              if (!n.readAt) setUnreadCount((c) => c + 1);
+            } catch { /* ignore malformed frames */ }
+          }
+        }
+      } catch {
+        if (!cancelled) setTimeout(connect, 5000);
+      }
+    }
+
+    connect();
+    return () => { cancelled = true; };
+  }, [tenantId]);
+
+  const markAllRead = async () => {
+    const token = getToken();
+    if (!token) return;
+    await fetch(
+      `${import.meta.env.VITE_API_BASE_URL ?? "http://localhost:4000"}/api/v1/notifications/read-all`,
+      { method: "PATCH", headers: { Authorization: `Bearer ${token}` } }
+    );
+    setNotifications((prev) => prev.map((n) => ({ ...n, readAt: new Date().toISOString() })));
+    setUnreadCount(0);
+  };
+
   const membership = active.find((m) => m.tenantId === tenantId);
 
   useEffect(() => {
@@ -682,6 +754,63 @@ function AppShell({
             >
               {theme === "light" ? <MoonIcon /> : <SunIcon />}
             </Button>
+
+            {/* Notification bell */}
+            <div className="relative">
+              <button
+                onClick={() => { setShowNotifPanel((v) => !v); if (showNotifPanel) {} }}
+                className="relative h-9 w-9 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                title="Notifications"
+              >
+                <BellIcon />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 h-4 w-4 flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifPanel && (
+                <>
+                  {/* Backdrop */}
+                  <div className="fixed inset-0 z-40" onClick={() => setShowNotifPanel(false)} />
+                  {/* Panel */}
+                  <div className="absolute right-0 top-11 z-50 w-80 rounded-lg border border-border bg-card shadow-lg">
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+                      <span className="text-sm font-semibold text-foreground">Notifications</span>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={markAllRead}
+                          className="text-xs text-accent hover:underline"
+                        >
+                          Mark all read
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-80 overflow-y-auto divide-y divide-border">
+                      {notifications.length === 0 ? (
+                        <p className="px-4 py-6 text-center text-sm text-muted-foreground">No notifications yet</p>
+                      ) : (
+                        notifications.slice(0, 15).map((n) => (
+                          <div
+                            key={n.id}
+                            className={`px-4 py-3 ${!n.readAt ? "bg-accent/5" : ""}`}
+                          >
+                            <p className={`text-sm font-medium ${!n.readAt ? "text-foreground" : "text-muted-foreground"}`}>
+                              {n.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.body}</p>
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              {new Date(n.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* Sign out - Hidden on mobile */}
             <Button
@@ -2079,7 +2208,7 @@ function ClassesView({ membership }: { membership: any }) {
 }
 
 function CommunicationView({ membership }: { membership: any }) {
-  const [tab, setTab] = useState<"templates" | "send" | "history">("send");
+  const [tab, setTab] = useState<"suggestions" | "send" | "templates" | "history">("suggestions");
   const [templates, setTemplates] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -2095,6 +2224,12 @@ function CommunicationView({ membership }: { membership: any }) {
   const [recipientRole, setRecipientRole] = useState("PARENT");
   const [channel, setChannel] = useState("WHATSAPP");
   const [scheduleDate, setScheduleDate] = useState("");
+
+  // AI suggestions state
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [suggestChannel, setSuggestChannel] = useState("WHATSAPP");
+  const [suggestMsg, setSuggestMsg] = useState<string>();
 
   // Form state for creating templates
   const [templateName, setTemplateName] = useState("");
@@ -2192,6 +2327,30 @@ function CommunicationView({ membership }: { membership: any }) {
     }
   };
 
+  const fetchSuggestions = async () => {
+    setLoadingSuggestions(true);
+    setSuggestMsg(undefined);
+    setSuggestions([]);
+    try {
+      const res = await apiFetch<{ suggestions: any[]; message?: string }>(
+        `/ai/communication/suggestions?days=30&channel=${suggestChannel}`,
+        { tenantId: membership.tenantId }
+      );
+      setSuggestions(res.suggestions ?? []);
+      if (!res.suggestions?.length) setSuggestMsg(res.message ?? "No upcoming events found for the next 30 days.");
+    } catch (e) {
+      setSuggestMsg(e instanceof Error ? e.message : "AI service unavailable");
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  const useSuggestion = (s: any) => {
+    setCustomMessage(s.message ?? "");
+    setRecipientRole(s.recipientRole ?? "PARENT");
+    setTab("send");
+  };
+
   return (
     <div className="space-y-6">
       {error && <ErrorMessage message={error} />}
@@ -2202,19 +2361,89 @@ function CommunicationView({ membership }: { membership: any }) {
         <p className="mt-1 text-sm text-muted-foreground">Send notifications and messages to parents, teachers, and students</p>
       </div>
 
-      <div className="flex gap-2 border-b border-border">
-        {(["send", "templates", "history"] as const).map((t) => (
+      <div className="flex gap-2 border-b border-border overflow-x-auto">
+        {(["suggestions", "send", "templates", "history"] as const).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`px-4 py-2 text-sm font-medium border-b-2 ${
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 whitespace-nowrap ${
               tab === t ? "border-accent text-accent" : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t === "send" ? "Send Message" : t === "templates" ? "Templates" : "History"}
+            {t === "suggestions" && <SparklesIcon />}
+            {t === "suggestions" ? "AI Suggestions" : t === "send" ? "Send Message" : t === "templates" ? "Templates" : "History"}
           </button>
         ))}
       </div>
+
+      {tab === "suggestions" && (
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <SparklesIcon className="h-5 w-5 text-accent" />
+                  AI Communication Suggestions
+                </CardTitle>
+                <CardDescription>
+                  AI analyses your upcoming school events and suggests ready-to-send notifications
+                </CardDescription>
+              </div>
+              <select
+                value={suggestChannel}
+                onChange={(e) => setSuggestChannel(e.target.value)}
+                className="h-9 px-3 rounded-md border border-input bg-background text-sm text-foreground shrink-0"
+              >
+                <option value="WHATSAPP">WhatsApp</option>
+                <option value="SMS">SMS</option>
+                <option value="EMAIL">Email</option>
+              </select>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Button onClick={fetchSuggestions} disabled={loadingSuggestions} className="w-full sm:w-auto">
+              {loadingSuggestions ? "Generating…" : "Generate Suggestions"}
+            </Button>
+
+            {suggestMsg && (
+              <p className="text-sm text-muted-foreground">{suggestMsg}</p>
+            )}
+
+            {suggestions.length > 0 && (
+              <div className="space-y-3">
+                {suggestions.map((s, i) => (
+                  <div key={i} className="rounded-lg border border-border p-4 space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm font-medium text-foreground">{s.eventTitle}</p>
+                      <span className={`shrink-0 text-[10px] font-semibold uppercase px-2 py-0.5 rounded-full ${
+                        s.priority === "HIGH"
+                          ? "bg-destructive/10 text-destructive"
+                          : s.priority === "MEDIUM"
+                          ? "bg-accent/10 text-accent"
+                          : "bg-muted text-muted-foreground"
+                      }`}>
+                        {s.priority}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{s.message}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-muted-foreground">To: {s.recipientRole?.toLowerCase()}</span>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => useSuggestion(s)}
+                        className="ml-auto"
+                      >
+                        Use this
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {tab === "send" && (
         <Card>
