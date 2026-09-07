@@ -326,7 +326,8 @@ function AppShell({
   const membership = active.find((m) => m.tenantId === tenantId);
 
   useEffect(() => {
-    if (!tenantId || !membership || membership.role === "PARENT") {
+    // Only load students when on students view
+    if (activeView !== "students" || !tenantId || !membership || membership.role === "PARENT") {
       setStudents([]);
       return;
     }
@@ -343,7 +344,7 @@ function AppShell({
     return () => {
       mounted = false;
     };
-  }, [tenantId, membership]);
+  }, [activeView, tenantId, membership?.tenantId]);
 
   const sidebarItems: Array<{ id: SidebarView; label: string; icon: React.ReactNode }> = [
     { id: "dashboard", label: "Dashboard", icon: <DashboardIcon /> },
