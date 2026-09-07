@@ -547,17 +547,42 @@ function AppShell({
     };
   }, [activeView, tenantId, membership?.tenantId]);
 
-  const sidebarItems: Array<{ id: SidebarView; label: string; icon: React.ReactNode }> = [
-    { id: "dashboard", label: "Dashboard", icon: <DashboardIcon /> },
-    { id: "students", label: "Students", icon: <UsersIcon /> },
-    { id: "teachers", label: "Teachers", icon: <TeachersIcon /> },
-    { id: "classes", label: "Classes", icon: <BookIcon /> },
-    { id: "attendance", label: "Attendance", icon: <CheckSquareIcon /> },
-    { id: "finance", label: "Finance", icon: <WalletIcon /> },
-    { id: "consent", label: "Consent", icon: <ShieldIcon /> },
-    { id: "communication", label: "Communication", icon: <MessageIcon /> },
-    { id: "members", label: "Members", icon: <UsersIcon /> },
-    { id: "settings", label: "Org Settings", icon: <SettingsIcon /> },
+  const sidebarGroups = [
+    {
+      group: "Overview",
+      items: [
+        { id: "dashboard" as const, label: "Dashboard", icon: <DashboardIcon /> },
+      ],
+    },
+    {
+      group: "People",
+      items: [
+        { id: "members" as const, label: "Members", icon: <UsersIcon /> },
+        { id: "students" as const, label: "Students", icon: <UsersIcon /> },
+        { id: "teachers" as const, label: "Teachers", icon: <TeachersIcon /> },
+      ],
+    },
+    {
+      group: "Academic",
+      items: [
+        { id: "classes" as const, label: "Classes", icon: <BookIcon /> },
+        { id: "attendance" as const, label: "Attendance", icon: <CheckSquareIcon /> },
+      ],
+    },
+    {
+      group: "Operations",
+      items: [
+        { id: "communication" as const, label: "Communication", icon: <MessageIcon /> },
+        { id: "finance" as const, label: "Finance", icon: <WalletIcon /> },
+        { id: "consent" as const, label: "Consent", icon: <ShieldIcon /> },
+      ],
+    },
+    {
+      group: "Admin",
+      items: [
+        { id: "settings" as const, label: "Org Settings", icon: <SettingsIcon /> },
+      ],
+    },
   ];
 
   return (
@@ -640,21 +665,30 @@ function AppShell({
       {/* Main content with sidebar */}
       <div className="flex flex-1 overflow-hidden">
         {/* Sidebar */}
-        <aside className="w-64 border-r border-border bg-card">
-          <nav className="space-y-1 p-4">
-            {sidebarItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => setActiveView(item.id)}
-                className={`w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                  activeView === item.id
-                    ? "bg-accent text-accent-foreground border-l-2 border-accent"
-                    : "text-foreground hover:bg-muted text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {item.icon}
-                {item.label}
-              </button>
+        <aside className="w-64 border-r border-border bg-card overflow-y-auto">
+          <nav className="space-y-6 p-4">
+            {sidebarGroups.map((group) => (
+              <div key={group.group}>
+                <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                  {group.group}
+                </p>
+                <div className="space-y-1">
+                  {group.items.map((item) => (
+                    <button
+                      key={item.id}
+                      onClick={() => setActiveView(item.id)}
+                      className={`w-full flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                        activeView === item.id
+                          ? "bg-accent text-accent-foreground border-l-2 border-accent"
+                          : "text-foreground hover:bg-muted text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {item.icon}
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             ))}
           </nav>
         </aside>
