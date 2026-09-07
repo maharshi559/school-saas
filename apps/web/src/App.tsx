@@ -112,6 +112,15 @@ const WalletIcon = ({ className = "h-5 w-5" }: { className?: string } = {}) => (
   </svg>
 );
 
+const GridIcon = ({ className = "h-5 w-5" }: { className?: string } = {}) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <rect x="3" y="3" width="7" height="7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <rect x="14" y="3" width="7" height="7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <rect x="14" y="14" width="7" height="7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <rect x="3" y="14" width="7" height="7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 const MessageIcon = () => (
   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -565,16 +574,53 @@ function AppShell({
 }
 
 function DashboardView({ membership }: { membership: any }) {
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    totalTeachers: 0,
+    totalClasses: 0,
+    totalSections: 0,
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!membership) return;
+    let mounted = true;
+
+    Promise.all([
+      apiFetch<{ items: any[] }>("/students?limit=1000", { tenantId: membership.tenantId }).catch(() => ({ items: [] })),
+      apiFetch<{ items: any[] }>("/teachers", { tenantId: membership.tenantId }).catch(() => ({ items: [] })),
+      apiFetch<{ items: any[] }>("/class-sections", { tenantId: membership.tenantId }).catch(() => ({ items: [] })),
+      apiFetch<{ items: any[] }>("/class-levels", { tenantId: membership.tenantId }).catch(() => ({ items: [] })),
+    ])
+      .then(([studentsRes, teachersRes, sectionsRes, levelsRes]) => {
+        if (mounted) {
+          setStats({
+            totalStudents: studentsRes.items.length,
+            totalTeachers: teachersRes.items.length,
+            totalClasses: levelsRes.items.length,
+            totalSections: sectionsRes.items.length,
+          });
+        }
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [membership?.tenantId]);
+
   return (
     <div className="space-y-6">
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="flex flex-col justify-between">
           <CardContent className="pt-6">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs font-medium text-muted-foreground mb-1">Total Students</p>
-                <p className="text-2xl font-semibold text-foreground font-mono">154</p>
+                <p className="text-2xl font-semibold text-foreground font-mono">{loading ? "—" : stats.totalStudents}</p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
                 <UsersIcon />
@@ -587,11 +633,11 @@ function DashboardView({ membership }: { membership: any }) {
           <CardContent className="pt-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">Present Today</p>
-                <p className="text-2xl font-semibold text-foreground font-mono">142</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Total Teachers</p>
+                <p className="text-2xl font-semibold text-foreground font-mono">{loading ? "—" : stats.totalTeachers}</p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                <CheckSquareIcon />
+                <TeachersIcon />
               </div>
             </div>
           </CardContent>
@@ -601,11 +647,11 @@ function DashboardView({ membership }: { membership: any }) {
           <CardContent className="pt-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">Fees Pending</p>
-                <p className="text-2xl font-semibold text-foreground font-mono">₹2.4L</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Total Classes</p>
+                <p className="text-2xl font-semibold text-foreground font-mono">{loading ? "—" : stats.totalClasses}</p>
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
-                <CreditCardIcon />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                <BookIcon />
               </div>
             </div>
           </CardContent>
@@ -615,11 +661,11 @@ function DashboardView({ membership }: { membership: any }) {
           <CardContent className="pt-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">Consent Rate</p>
-                <p className="text-2xl font-semibold text-foreground font-mono">87%</p>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Total Sections</p>
+                <p className="text-2xl font-semibold text-foreground font-mono">{loading ? "—" : stats.totalSections}</p>
               </div>
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
-                <ShieldIcon />
+                <GridIcon />
               </div>
             </div>
           </CardContent>
@@ -656,39 +702,26 @@ function DashboardView({ membership }: { membership: any }) {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Quick Stats</CardTitle>
+            <CardTitle className="text-lg">Quick Info</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col space-y-3">
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Attendance Rate</span>
-                <span className="text-sm font-medium text-foreground font-mono">92.2%</span>
+                <span className="text-sm text-muted-foreground">School</span>
+                <span className="text-sm font-medium text-foreground">{membership?.tenantName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Classes Today</span>
-                <span className="text-sm font-medium text-foreground font-mono">6</span>
+                <span className="text-sm text-muted-foreground">Tenant ID</span>
+                <span className="text-xs font-mono text-muted-foreground">{membership?.tenantId.slice(0, 8)}…</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Pending Consents</span>
-                <span className="text-sm font-medium text-destructive font-mono">12</span>
+                <span className="text-sm text-muted-foreground">Member Since</span>
+                <span className="text-sm font-medium text-foreground">Connected</span>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Chart Placeholder */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-lg">Attendance Trend</CardTitle>
-          <CardDescription>Weekly attendance statistics</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-48 bg-muted/30 rounded-md flex items-center justify-center">
-            <p className="text-sm text-muted-foreground">Chart placeholder - connect to analytics data</p>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }
