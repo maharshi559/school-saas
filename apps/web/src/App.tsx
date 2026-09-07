@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from "./components/ui/alert.js";
 import { Avatar } from "./components/ui/avatar.js";
 import { ToastContainer, type Toast } from "./components/Toast.js";
 import { LanguageProvider, useLanguage } from "./lib/i18n.js";
+import { EmptyState, LoadingState, FormField, StatusBadge, SuccessMessage, ErrorMessage } from "./lib/ui-helpers.js";
 
 type Student = {
   id: string;
@@ -21,7 +22,7 @@ type Student = {
   enrollmentStatus?: string;
   classSection?: { id: string; name: string };
 };
-type SidebarView = "dashboard" | "students" | "teachers" | "classes" | "attendance" | "finance" | "consent" | "communication" | "members" | "settings";
+type SidebarView = "dashboard" | "students" | "teachers" | "classes" | "attendance" | "finance" | "consent" | "communication" | "members" | "account" | "settings";
 
 const SunIcon = () => (
   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -494,7 +495,7 @@ function AppShell({
   const [tenantId, setTenantId] = useState(active[0]?.tenantId ?? "");
   const [activeView, setActiveViewState] = useState<SidebarView>(() => {
     const hash = window.location.hash.slice(1);
-    const validViews = ["dashboard", "students", "teachers", "classes", "attendance", "finance", "consent", "communication", "members", "settings"];
+    const validViews = ["dashboard", "students", "teachers", "classes", "attendance", "finance", "consent", "communication", "members", "account", "settings"];
     return (hash && validViews.includes(hash) ? hash : "dashboard") as SidebarView;
   });
 
@@ -516,7 +517,7 @@ function AppShell({
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
-      const validViews = ["dashboard", "students", "teachers", "classes", "attendance", "finance", "consent", "communication", "members", "settings"];
+      const validViews = ["dashboard", "students", "teachers", "classes", "attendance", "finance", "consent", "communication", "members", "account", "settings"];
       if (hash && validViews.includes(hash)) {
         setActiveViewState(hash as SidebarView);
       }
@@ -627,22 +628,39 @@ function AppShell({
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Avatar
-              initials={(user.displayName || user.phone).substring(0, 2).toUpperCase()}
-              name={user.displayName || undefined}
-              className="h-9 w-9"
-            />
-            <div className="text-right">
-              <p className="text-sm font-medium text-foreground">{user.displayName ?? user.phone}</p>
-              <p className="text-xs text-muted-foreground">
-                {membership?.role.toLowerCase().replace("_", " ")}
-              </p>
+            {/* Avatar - Clickable on mobile, visible on all sizes */}
+            <button
+              onClick={() => setActiveView("account")}
+              className="lg:hidden h-9 w-9 rounded-full hover:opacity-80 transition-opacity"
+            >
+              <Avatar
+                initials={(user.displayName || user.phone).substring(0, 2).toUpperCase()}
+                name={user.displayName || undefined}
+                className="h-9 w-9"
+              />
+            </button>
+
+            {/* User details - Hidden on mobile */}
+            <div className="hidden sm:flex sm:items-center sm:gap-3">
+              <Avatar
+                initials={(user.displayName || user.phone).substring(0, 2).toUpperCase()}
+                name={user.displayName || undefined}
+                className="h-9 w-9"
+              />
+              <div className="text-right">
+                <p className="text-sm font-medium text-foreground">{user.displayName ?? user.phone}</p>
+                <p className="text-xs text-muted-foreground">
+                  {membership?.role.toLowerCase().replace("_", " ")}
+                </p>
+              </div>
             </div>
+
+            {/* Settings buttons - Language and Theme */}
             <Button
               variant="ghost"
               size="sm"
               onClick={() => setLanguage(language === "en" ? "hi" : "en")}
-              className="text-muted-foreground text-xs font-medium"
+              className="text-muted-foreground text-xs font-medium hidden sm:flex"
               title={`Switch to ${language === "en" ? "Hindi" : "English"}`}
             >
               {language === "en" ? "हिंदी" : "EN"}
@@ -651,11 +669,17 @@ function AppShell({
               variant="ghost"
               size="sm"
               onClick={() => onThemeChange(theme === "light" ? "dark" : "light")}
-              className="text-muted-foreground"
+              className="text-muted-foreground hidden sm:flex"
             >
               {theme === "light" ? <MoonIcon /> : <SunIcon />}
             </Button>
-            <Button variant="ghost" onClick={onLogout} className="text-sm">
+
+            {/* Sign out - Hidden on mobile */}
+            <Button
+              variant="ghost"
+              onClick={onLogout}
+              className="text-sm hidden sm:block"
+            >
               {t("nav.signOut", "Sign out")}
             </Button>
           </div>
@@ -732,6 +756,64 @@ function AppShell({
                 )}
                 {activeView === "communication" && <CommunicationView membership={membership} />}
                 {activeView === "members" && <MembersView membership={membership} />}
+                {activeView === "account" && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-2xl">My Account</CardTitle>
+                      <CardDescription>View and manage your profile</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                      <div className="flex items-center gap-4">
+                        <Avatar
+                          initials={(user.displayName || user.phone).substring(0, 2).toUpperCase()}
+                          name={user.displayName || undefined}
+                          className="h-16 w-16"
+                        />
+                        <div>
+                          <p className="text-lg font-semibold text-foreground">{user.displayName || "User"}</p>
+                          <p className="text-sm text-muted-foreground">{user.phone}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-4 border-t border-border pt-6">
+                        <div>
+                          <p className="text-sm font-medium text-foreground mb-1">School</p>
+                          <p className="text-sm text-muted-foreground">{membership?.tenantName}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-foreground mb-1">Role</p>
+                          <p className="text-sm text-muted-foreground capitalize">{membership?.role.toLowerCase().replace("_", " ")}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-foreground mb-1">Status</p>
+                          <p className="text-sm text-muted-foreground capitalize">{membership?.status.toLowerCase()}</p>
+                        </div>
+                      </div>
+                      <div className="space-y-3 border-t border-border pt-6">
+                        <Button
+                          variant="outline"
+                          onClick={() => setLanguage(language === "en" ? "hi" : "en")}
+                          className="w-full justify-center"
+                        >
+                          Language: {language === "en" ? "English" : "हिंदी"}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => onThemeChange(theme === "light" ? "dark" : "light")}
+                          className="w-full justify-center"
+                        >
+                          Theme: {theme === "light" ? "Light" : "Dark"}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={onLogout}
+                          className="w-full"
+                        >
+                          Sign Out
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
                 {activeView === "settings" && (
                   <Card>
                     <CardHeader>
@@ -1168,10 +1250,9 @@ function StudentsView({
             <CardTitle className="text-lg">{editingId ? "Edit Student" : "Add New Student"}</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="first-name">First Name *</Label>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField label="First Name" required error={!formData.firstName && formError ? "Required" : undefined}>
                   <Input
                     id="first-name"
                     value={formData.firstName}
@@ -1179,9 +1260,8 @@ function StudentsView({
                     placeholder="e.g., Aarav"
                     disabled={submitting}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="last-name">Last Name *</Label>
+                </FormField>
+                <FormField label="Last Name" required error={!formData.lastName && formError ? "Required" : undefined}>
                   <Input
                     id="last-name"
                     value={formData.lastName}
@@ -1189,12 +1269,11 @@ function StudentsView({
                     placeholder="e.g., Sharma"
                     disabled={submitting}
                   />
-                </div>
+                </FormField>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="admission">Admission Number *</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField label="Admission Number" required hint={editingId ? "Cannot change admission number" : undefined} error={!formData.admissionNo && formError ? "Required" : undefined}>
                   <Input
                     id="admission"
                     value={formData.admissionNo}
@@ -1202,12 +1281,8 @@ function StudentsView({
                     placeholder="e.g., ADM1001"
                     disabled={submitting || !!editingId}
                   />
-                  {editingId && (
-                    <p className="text-xs text-muted-foreground">Cannot change admission number</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dob">Date of Birth</Label>
+                </FormField>
+                <FormField label="Date of Birth">
                   <Input
                     id="dob"
                     type="date"
@@ -1215,12 +1290,11 @@ function StudentsView({
                     onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
                     disabled={submitting}
                   />
-                </div>
+                </FormField>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="class-section">Class Section</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField label="Class Section">
                   <select
                     id="class-section"
                     value={formData.classSectionId}
@@ -1235,9 +1309,8 @@ function StudentsView({
                       </option>
                     ))}
                   </select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="enrollment">Enrollment Status</Label>
+                </FormField>
+                <FormField label="Enrollment Status">
                   <select
                     id="enrollment"
                     value={formData.enrollmentStatus}
@@ -1255,16 +1328,12 @@ function StudentsView({
                     <option value="GRADUATED">Graduated</option>
                     <option value="TRANSFERRED">Transferred</option>
                   </select>
-                </div>
+                </FormField>
               </div>
 
-              {formError && (
-                <Alert variant="destructive">
-                  <AlertDescription>{formError}</AlertDescription>
-                </Alert>
-              )}
+              {formError && <ErrorMessage message={formError} />}
 
-              <div className="flex gap-3">
+              <div className="flex gap-3 pt-2">
                 <Button type="submit" disabled={submitting}>
                   {submitting ? "Saving…" : editingId ? "Update Student" : "Add Student"}
                 </Button>
@@ -1293,7 +1362,7 @@ function StudentsView({
                 <tr className="border-b border-border bg-muted/30">
                   <th className="px-6 py-3 text-left font-semibold text-foreground">Name</th>
                   <th className="px-6 py-3 text-left font-semibold text-foreground">Admission No.</th>
-                  <th className="px-6 py-3 text-left font-semibold text-foreground">Class Section</th>
+                  <th className="hidden sm:table-cell px-6 py-3 text-left font-semibold text-foreground">Class Section</th>
                   <th className="px-6 py-3 text-left font-semibold text-foreground">Status</th>
                   <th className="px-6 py-3 text-center font-semibold text-foreground">Actions</th>
                 </tr>
@@ -1305,7 +1374,7 @@ function StudentsView({
                       {s.firstName} {s.lastName}
                     </td>
                     <td className="px-6 py-4 font-mono text-xs text-muted-foreground">{s.admissionNo}</td>
-                    <td className="px-6 py-4 text-sm">
+                    <td className="hidden sm:table-cell px-6 py-4 text-sm">
                       {inlineEditingId === s.id && inlineEditField === "classSection" ? (
                         <div className="flex gap-2">
                           <Input
@@ -1394,17 +1463,10 @@ function StudentsView({
                         </div>
                       ) : (
                         <div className="flex items-center justify-between gap-2 group">
-                          <span
-                            className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                              s.enrollmentStatus === "ENROLLED"
-                                ? "bg-accent/10 text-accent"
-                                : s.enrollmentStatus === "INACTIVE"
-                                  ? "bg-muted text-muted-foreground"
-                                  : "bg-muted text-muted-foreground"
-                            }`}
-                          >
-                            {(s.enrollmentStatus || "").toLowerCase()}
-                          </span>
+                          <StatusBadge
+                            status={(s.enrollmentStatus || "").toLowerCase()}
+                            variant={s.enrollmentStatus === "ENROLLED" ? "success" : s.enrollmentStatus === "INACTIVE" ? "default" : "info"}
+                          />
                           <Button
                             size="sm"
                             variant="ghost"
@@ -1445,13 +1507,12 @@ function StudentsView({
               </tbody>
             </table>
           ) : (
-            <div className="py-12 text-center">
-              <UsersIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground opacity-50" />
-              <p className="text-sm text-muted-foreground">No students yet</p>
-              <Button onClick={() => openForm()} className="mt-4">
-                Add the first student
-              </Button>
-            </div>
+            <EmptyState
+              icon={<UsersIcon />}
+              title="No students yet"
+              description="Add your first student to get started managing attendance, grades, and communications"
+              action={{ label: "Add the first student", onClick: () => openForm() }}
+            />
           )}
         </div>
       </Card>
@@ -1520,10 +1581,11 @@ function TeachersView({ membership }: { membership: any }) {
       </div>
 
       {loading ? (
-        <div className="text-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-foreground mx-auto mb-3"></div>
-          <p className="text-sm text-muted-foreground">Loading teachers…</p>
-        </div>
+        <Card>
+          <CardContent className="py-12">
+            <LoadingState message="Loading teachers…" />
+          </CardContent>
+        </Card>
       ) : teachers.length > 0 ? (
         <Card>
           <div className="overflow-x-auto">
@@ -1531,7 +1593,7 @@ function TeachersView({ membership }: { membership: any }) {
               <thead>
                 <tr className="border-b border-border bg-muted/30">
                   <th className="px-6 py-3 text-left font-semibold">Name</th>
-                  <th className="px-6 py-3 text-left font-semibold">Phone</th>
+                  <th className="hidden sm:table-cell px-6 py-3 text-left font-semibold">Phone</th>
                   <th className="px-6 py-3 text-center font-semibold">Actions</th>
                 </tr>
               </thead>
@@ -1539,7 +1601,7 @@ function TeachersView({ membership }: { membership: any }) {
                 {teachers.map((teacher) => (
                   <tr key={teacher.id} className="border-b border-border hover:bg-muted/30">
                     <td className="px-6 py-4 font-medium">{teacher.displayName}</td>
-                    <td className="px-6 py-4 font-mono text-xs text-muted-foreground">{teacher.phone}</td>
+                    <td className="hidden sm:table-cell px-6 py-4 font-mono text-xs text-muted-foreground">{teacher.phone}</td>
                     <td className="px-6 py-4 text-center">
                       <Button size="sm" variant="ghost" className="text-xs">Edit</Button>
                     </td>
@@ -1551,9 +1613,13 @@ function TeachersView({ membership }: { membership: any }) {
         </Card>
       ) : (
         <Card>
-          <CardContent className="py-12 text-center">
-            <UsersIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground opacity-50" />
-            <p className="text-sm text-muted-foreground">No teachers yet</p>
+          <CardContent className="py-12">
+            <EmptyState
+              icon={<UsersIcon />}
+              title="No teachers yet"
+              description="Add teachers to manage classes, mark attendance, and communicate with parents"
+              action={{ label: "Add the first teacher", onClick: () => {} }}
+            />
           </CardContent>
         </Card>
       )}
@@ -1581,6 +1647,8 @@ function ClassesView({ membership }: { membership: any }) {
   // Mode tracking
   const [yearMode, setYearMode] = useState<"new" | "existing">("existing");
   const [levelMode, setLevelMode] = useState<"new" | "existing">("existing");
+  const [formError, setFormError] = useState<string>();
+  const [successMessage, setSuccessMessage] = useState<string>();
 
   useEffect(() => {
     if (!membership) return;
@@ -1616,16 +1684,20 @@ function ClassesView({ membership }: { membership: any }) {
   }, [membership?.tenantId]);
 
   const handleYearNext = async () => {
+    setFormError(undefined);
     if (yearMode === "existing") {
       if (!selectedYearId) {
-        alert("Please select an academic year");
+        setFormError("Please select an academic year");
         return;
       }
       setFormStep("level");
     } else {
-      if (!yearValue || !startDate || !endDate) return;
+      if (!yearValue || !startDate || !endDate) {
+        setFormError("Please fill in all fields");
+        return;
+      }
       if (years.some((y) => y.name === yearValue)) {
-        alert(`Academic year "${yearValue}" already exists`);
+        setFormError(`Academic year "${yearValue}" already exists`);
         return;
       }
       try {
@@ -1642,26 +1714,26 @@ function ClassesView({ membership }: { membership: any }) {
         setFormStep("level");
       } catch (e) {
         const errorMsg = e instanceof Error ? e.message : "Failed to create academic year";
-        if (errorMsg.includes("Unique constraint")) {
-          alert(`Academic year "${yearValue}" already exists for this school`);
-        } else {
-          alert(errorMsg);
-        }
+        setFormError(errorMsg.includes("Unique constraint") ? `Academic year "${yearValue}" already exists for this school` : errorMsg);
       }
     }
   };
 
   const handleLevelNext = async () => {
+    setFormError(undefined);
     if (levelMode === "existing") {
       if (!selectedLevelId) {
-        alert("Please select a class level");
+        setFormError("Please select a class level");
         return;
       }
       setFormStep("section");
     } else {
-      if (!levelName) return;
+      if (!levelName) {
+        setFormError("Please enter a class name");
+        return;
+      }
       if (levels.some((l) => l.name === levelName)) {
-        alert(`Class level "${levelName}" already exists`);
+        setFormError(`Class level "${levelName}" already exists`);
         return;
       }
       try {
@@ -1676,20 +1748,20 @@ function ClassesView({ membership }: { membership: any }) {
         setFormStep("section");
       } catch (e) {
         const errorMsg = e instanceof Error ? e.message : "Failed to create class level";
-        if (errorMsg.includes("Unique constraint")) {
-          alert(`Class level "${levelName}" already exists for this school`);
-        } else {
-          alert(errorMsg);
-        }
+        setFormError(errorMsg.includes("Unique constraint") ? `Class level "${levelName}" already exists for this school` : errorMsg);
       }
     }
   };
 
   const handleSectionSubmit = async () => {
-    if (!sectionName || !selectedLevelId || !selectedYearId) return;
+    setFormError(undefined);
+    if (!sectionName || !selectedLevelId || !selectedYearId) {
+      setFormError("Please fill in all fields");
+      return;
+    }
 
     if (sections.some((s) => s.classLevelId === selectedLevelId && s.academicYearId === selectedYearId && s.name === sectionName)) {
-      alert(`Section "${sectionName}" already exists for this class and year`);
+      setFormError(`Section "${sectionName}" already exists for this class and year`);
       return;
     }
 
@@ -1707,9 +1779,11 @@ function ClassesView({ membership }: { membership: any }) {
       setFormStep("year");
       setYearMode("existing");
       setLevelMode("existing");
+      setSuccessMessage("Section created successfully");
+      setTimeout(() => setSuccessMessage(undefined), 3000);
     } catch (e) {
       const errorMsg = e instanceof Error ? e.message : "Failed to create section";
-      alert(errorMsg);
+      setFormError(errorMsg);
     }
   };
 
@@ -1726,6 +1800,8 @@ function ClassesView({ membership }: { membership: any }) {
         </Button>
       </div>
 
+      {successMessage && <SuccessMessage message={successMessage} />}
+
       {showForm && (
         <Card>
           <CardHeader>
@@ -1734,6 +1810,7 @@ function ClassesView({ membership }: { membership: any }) {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            {formError && <ErrorMessage message={formError} />}
             {formStep === "year" && (
               <>
                 <div className="space-y-3">
@@ -1906,10 +1983,11 @@ function ClassesView({ membership }: { membership: any }) {
       )}
 
       {loading ? (
-        <div className="text-center py-12">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-foreground mx-auto mb-3"></div>
-          <p className="text-sm text-muted-foreground">Loading classes…</p>
-        </div>
+        <Card>
+          <CardContent className="py-12">
+            <LoadingState message="Loading classes…" />
+          </CardContent>
+        </Card>
       ) : sections.length > 0 ? (
         <Card>
           <div className="overflow-x-auto">
@@ -1917,7 +1995,7 @@ function ClassesView({ membership }: { membership: any }) {
               <thead>
                 <tr className="border-b border-border bg-muted/30">
                   <th className="px-6 py-3 text-left font-semibold">Class</th>
-                  <th className="px-6 py-3 text-left font-semibold">Section</th>
+                  <th className="hidden sm:table-cell px-6 py-3 text-left font-semibold">Section</th>
                   <th className="px-6 py-3 text-left font-semibold">Year</th>
                 </tr>
               </thead>
@@ -1925,7 +2003,7 @@ function ClassesView({ membership }: { membership: any }) {
                 {sections.map((section) => (
                   <tr key={section.id} className="border-b border-border hover:bg-muted/30">
                     <td className="px-6 py-4 font-medium">{section.classLevel?.name}</td>
-                    <td className="px-6 py-4">{section.name}</td>
+                    <td className="hidden sm:table-cell px-6 py-4">{section.name}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{section.academicYear?.name}</td>
                   </tr>
                 ))}
@@ -1935,9 +2013,13 @@ function ClassesView({ membership }: { membership: any }) {
         </Card>
       ) : (
         <Card>
-          <CardContent className="py-12 text-center">
-            <BookIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground opacity-50" />
-            <p className="text-sm text-muted-foreground">No classes yet</p>
+          <CardContent className="py-12">
+            <EmptyState
+              icon={<BookIcon />}
+              title="No classes yet"
+              description="Create academic years, class levels, and sections to organize your school structure"
+              action={{ label: "Create the first class", onClick: () => setShowForm(true) }}
+            />
           </CardContent>
         </Card>
       )}
@@ -1951,6 +2033,10 @@ function CommunicationView({ membership }: { membership: any }) {
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
+  const [sending, setSending] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState<string>();
+  const [success, setSuccess] = useState<string>();
 
   // Form state for sending messages
   const [templateId, setTemplateId] = useState("");
@@ -1992,7 +2078,12 @@ function CommunicationView({ membership }: { membership: any }) {
   }, [membership?.tenantId]);
 
   const handleCreateTemplate = async () => {
-    if (!templateName || !templateContent) return;
+    setError(undefined);
+    if (!templateName || !templateContent) {
+      setError("Template name and content are required");
+      return;
+    }
+    setCreating(true);
     try {
       const res = await apiFetch<any>("/communication/templates", {
         tenantId: membership.tenantId,
@@ -2010,13 +2101,22 @@ function CommunicationView({ membership }: { membership: any }) {
       setTemplateContent("");
       setTemplateType("UPDATE");
       setTemplateChannel("WHATSAPP");
+      setSuccess("Template created successfully");
+      setTimeout(() => setSuccess(undefined), 3000);
     } catch (e) {
-      console.error(e);
+      setError(e instanceof Error ? e.message : "Failed to create template");
+    } finally {
+      setCreating(false);
     }
   };
 
   const handleSendMessage = async () => {
-    if (!customMessage && !templateId) return;
+    setError(undefined);
+    if (!customMessage && !templateId) {
+      setError("Please select a template or enter a message");
+      return;
+    }
+    setSending(true);
     try {
       const res = await apiFetch<any>("/communication/send", {
         tenantId: membership.tenantId,
@@ -2032,13 +2132,20 @@ function CommunicationView({ membership }: { membership: any }) {
       setHistory([res, ...history]);
       setCustomMessage("");
       setTemplateId("");
+      setSuccess(scheduleDate ? "Message scheduled successfully" : "Message sent successfully");
+      setTimeout(() => setSuccess(undefined), 3000);
     } catch (e) {
-      console.error(e);
+      setError(e instanceof Error ? e.message : "Failed to send message");
+    } finally {
+      setSending(false);
     }
   };
 
   return (
     <div className="space-y-6">
+      {error && <ErrorMessage message={error} />}
+      {success && <SuccessMessage message={success} />}
+
       <div>
         <h2 className="text-2xl font-semibold text-foreground">Communication</h2>
         <p className="mt-1 text-sm text-muted-foreground">Send notifications and messages to parents, teachers, and students</p>
@@ -2064,9 +2171,8 @@ function CommunicationView({ membership }: { membership: any }) {
             <CardTitle className="text-lg">Send Message</CardTitle>
             <CardDescription>Send notifications to your school community</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="useTemplate">Use Template (Optional)</Label>
+          <CardContent className="space-y-6">
+            <FormField label="Use Template (Optional)">
               <select
                 id="useTemplate"
                 value={templateId}
@@ -2078,65 +2184,60 @@ function CommunicationView({ membership }: { membership: any }) {
                   <option key={t.id} value={t.id}>{t.name}</option>
                 ))}
               </select>
-            </div>
+            </FormField>
 
             {!templateId && (
-              <div>
-                <Label htmlFor="message">Message</Label>
+              <FormField label="Message" required>
                 <textarea
                   id="message"
                   placeholder="Type your message here..."
                   value={customMessage}
                   onChange={(e) => setCustomMessage(e.target.value)}
-                  className="w-full px-3 py-2 border border-input rounded-md text-sm h-24 bg-background text-foreground"
+                  className="w-full px-3 py-2 border border-input rounded-md text-sm h-24 bg-background text-foreground resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
-              </div>
+              </FormField>
             )}
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="recipient">Send To</Label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <FormField label="Send To">
                 <select
                   id="recipient"
                   value={recipientRole}
                   onChange={(e) => setRecipientRole(e.target.value)}
-                  className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground"
+                  className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <option value="PARENT">Parents</option>
                   <option value="TEACHER">Teachers</option>
                   <option value="STUDENT">Students</option>
                   <option value="ALL">All</option>
                 </select>
-              </div>
+              </FormField>
 
-              <div>
-                <Label htmlFor="channel">Channel</Label>
+              <FormField label="Channel">
                 <select
                   id="channel"
                   value={channel}
                   onChange={(e) => setChannel(e.target.value)}
-                  className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground"
+                  className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <option value="WHATSAPP">WhatsApp</option>
                   <option value="SMS">SMS</option>
                   <option value="EMAIL">Email</option>
                 </select>
-              </div>
+              </FormField>
             </div>
 
-            <div>
-              <Label htmlFor="schedule">Schedule (Optional)</Label>
+            <FormField label="Schedule (Optional)" hint="Leave empty to send immediately">
               <Input
                 id="schedule"
                 type="datetime-local"
                 value={scheduleDate}
                 onChange={(e) => setScheduleDate(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground mt-1">Leave empty to send immediately</p>
-            </div>
+            </FormField>
 
-            <Button onClick={handleSendMessage} className="w-full">
-              {scheduleDate ? "Schedule Message" : "Send Now"}
+            <Button onClick={handleSendMessage} disabled={sending} className="w-full">
+              {sending ? "Sending…" : scheduleDate ? "Schedule Message" : "Send Now"}
             </Button>
           </CardContent>
         </Card>
@@ -2149,25 +2250,25 @@ function CommunicationView({ membership }: { membership: any }) {
             <CardDescription>Create reusable message templates</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-4 border-b border-border pb-4 mb-4">
-              <div>
-                <Label htmlFor="templateName">Template Name</Label>
+            <div className="space-y-6 border-b border-border pb-6 mb-6">
+              <FormField label="Template Name" required>
                 <Input
                   id="templateName"
                   placeholder="e.g., Holiday Announcement"
                   value={templateName}
                   onChange={(e) => setTemplateName(e.target.value)}
+                  disabled={creating}
                 />
-              </div>
+              </FormField>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="type">Type</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <FormField label="Type">
                   <select
                     id="type"
                     value={templateType}
                     onChange={(e) => setTemplateType(e.target.value)}
-                    className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground"
+                    className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    disabled={creating}
                   >
                     <option value="UPDATE">Update</option>
                     <option value="HOLIDAY">Holiday</option>
@@ -2175,57 +2276,59 @@ function CommunicationView({ membership }: { membership: any }) {
                     <option value="ANNOUNCEMENT">Announcement</option>
                     <option value="EMERGENCY">Emergency</option>
                   </select>
-                </div>
+                </FormField>
 
-                <div>
-                  <Label htmlFor="tplChannel">Channel</Label>
+                <FormField label="Channel">
                   <select
                     id="tplChannel"
                     value={templateChannel}
                     onChange={(e) => setTemplateChannel(e.target.value)}
-                    className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground"
+                    className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    disabled={creating}
                   >
                     <option value="WHATSAPP">WhatsApp</option>
                     <option value="SMS">SMS</option>
                     <option value="EMAIL">Email</option>
                   </select>
-                </div>
+                </FormField>
               </div>
 
-              <div>
-                <Label htmlFor="templateContent">Template Content</Label>
+              <FormField label="Template Content" required hint="Use {{variable}} for placeholders (e.g., {{schoolName}}, {{date}})">
                 <textarea
                   id="templateContent"
-                  placeholder="Use {{variable}} for placeholders (e.g., {{schoolName}}, {{date}})"
+                  placeholder="Dear {{name}}, {{schoolName}} will be closed on {{date}} due to {{reason}}."
                   value={templateContent}
                   onChange={(e) => setTemplateContent(e.target.value)}
-                  className="w-full px-3 py-2 border border-input rounded-md text-sm h-20 bg-background text-foreground"
+                  className="w-full px-3 py-2 border border-input rounded-md text-sm h-20 bg-background text-foreground resize-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  disabled={creating}
                 />
-              </div>
+              </FormField>
 
-              <Button onClick={handleCreateTemplate} className="w-full">Create Template</Button>
+              <Button onClick={handleCreateTemplate} disabled={creating} className="w-full">
+                {creating ? "Creating…" : "Create Template"}
+              </Button>
             </div>
 
             <div className="space-y-2">
-              <h3 className="font-medium text-sm">Existing Templates</h3>
+              <h3 className="font-medium text-sm mb-4">Existing Templates</h3>
               {templates.length > 0 ? (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-border bg-muted/30">
                         <th className="px-4 py-3 text-left font-semibold">Name</th>
-                        <th className="px-4 py-3 text-left font-semibold">Type</th>
+                        <th className="hidden sm:table-cell px-4 py-3 text-left font-semibold">Type</th>
                         <th className="px-4 py-3 text-left font-semibold">Channel</th>
-                        <th className="px-4 py-3 text-left font-semibold">Action</th>
+                        <th className="px-4 py-3 text-center font-semibold">Action</th>
                       </tr>
                     </thead>
                     <tbody>
                       {templates.map((t) => (
-                        <tr key={t.id} className="border-b border-border hover:bg-muted/30 cursor-pointer">
+                        <tr key={t.id} className="border-b border-border hover:bg-muted/30">
                           <td className="px-4 py-3 font-medium">{t.name}</td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground">{t.type}</td>
+                          <td className="hidden sm:table-cell px-4 py-3 text-xs text-muted-foreground">{t.type}</td>
                           <td className="px-4 py-3 text-xs text-muted-foreground">{t.channel}</td>
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3 text-center">
                             <Button
                               size="sm"
                               variant="ghost"
@@ -2241,7 +2344,10 @@ function CommunicationView({ membership }: { membership: any }) {
                   </table>
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground text-center py-4">No templates created yet</p>
+                <div className="text-center py-8">
+                  <p className="text-sm text-muted-foreground">No templates created yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Create your first template above to get started</p>
+                </div>
               )}
             </div>
           </CardContent>
@@ -2258,25 +2364,26 @@ function CommunicationView({ membership }: { membership: any }) {
             <div className="space-y-3">
               {history.length > 0 ? (
                 history.map((msg) => (
-                  <div key={msg.id} className="p-3 border border-border rounded-md text-sm">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-medium">{msg.status}</p>
-                        <p className="text-xs text-muted-foreground">{msg.recipientRole} · {msg.channel}</p>
+                  <div key={msg.id} className="p-4 border border-border rounded-md text-sm hover:bg-muted/30 transition-colors">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="font-medium">{msg.recipientRole}</p>
+                          <StatusBadge
+                            status={msg.status.toLowerCase()}
+                            variant={msg.status === "SENT" ? "success" : msg.status === "SCHEDULED" ? "info" : msg.status === "FAILED" ? "destructive" : "default"}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">{msg.channel} · {msg.recipientCount} recipients</p>
                       </div>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        msg.status === "SENT" ? "bg-accent/10 text-accent" :
-                        msg.status === "SCHEDULED" ? "bg-input text-input-foreground" :
-                        "bg-muted text-muted-foreground"
-                      }`}>
-                        {msg.status}
-                      </span>
                     </div>
-                    <p className="text-xs text-muted-foreground mt-2">Recipients: {msg.recipientCount}</p>
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-8">No messages yet</p>
+                <div className="text-center py-12">
+                  <p className="text-sm text-muted-foreground">No messages sent yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">Messages you send will appear here</p>
+                </div>
               )}
             </div>
           </CardContent>
@@ -2353,6 +2460,7 @@ function MembersView({ membership }: { membership: any }) {
   const [formError, setFormError] = useState<string>();
   const [selectedRole, setSelectedRole] = useState<string>("TEACHER");
   const [approvingId, setApprovingId] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string>();
 
   useEffect(() => {
     if (!membership) return;
@@ -2432,6 +2540,7 @@ function MembersView({ membership }: { membership: any }) {
 
   const handleApprove = async (memberId: string) => {
     setApprovingId(memberId);
+    setFormError(undefined);
     try {
       await apiFetch(`/members/${memberId}/approve`, {
         tenantId: membership.tenantId,
@@ -2439,8 +2548,10 @@ function MembersView({ membership }: { membership: any }) {
         body: JSON.stringify({ role: selectedRole }),
       });
       setPendingMembers(pendingMembers.filter((m) => m.id !== memberId));
+      setSuccess("Member approved successfully");
+      setTimeout(() => setSuccess(undefined), 3000);
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to approve member");
+      setFormError(e instanceof Error ? e.message : "Failed to approve member");
     } finally {
       setApprovingId(null);
     }
@@ -2448,6 +2559,9 @@ function MembersView({ membership }: { membership: any }) {
 
   return (
     <div className="space-y-6">
+      {formError && <ErrorMessage message={formError} />}
+      {success && <SuccessMessage message={success} />}
+
       <div>
         <h2 className="text-2xl font-semibold text-foreground">Members</h2>
         <p className="mt-1 text-sm text-muted-foreground">Manage school members and invitations</p>
@@ -2475,10 +2589,7 @@ function MembersView({ membership }: { membership: any }) {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <div className="text-center py-8">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-foreground mx-auto mb-2"></div>
-                <p className="text-sm text-muted-foreground">Loading...</p>
-              </div>
+              <LoadingState message="Loading pending members…" />
             ) : pendingMembers.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
@@ -2525,7 +2636,10 @@ function MembersView({ membership }: { membership: any }) {
                 </table>
               </div>
             ) : (
-              <p className="text-center text-sm text-muted-foreground py-8">No pending approvals</p>
+              <div className="text-center py-12">
+                <p className="text-sm text-muted-foreground">No pending approvals</p>
+                <p className="text-xs text-muted-foreground mt-1">Members will appear here when they request to join</p>
+              </div>
             )}
           </CardContent>
         </Card>
@@ -2538,42 +2652,39 @@ function MembersView({ membership }: { membership: any }) {
               <CardTitle className="text-lg">Add Members</CardTitle>
               <CardDescription>Enter details and generate invite links</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                <div>
-                  <Label htmlFor="name">Full Name</Label>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <FormField label="Full Name" required>
                   <Input
                     id="name"
                     placeholder="e.g., John Doe"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
-                </div>
-                <div>
-                  <Label htmlFor="phone">Phone (E.164)</Label>
+                </FormField>
+                <FormField label="Phone (E.164)" required>
                   <Input
                     id="phone"
                     placeholder="+919876543210"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    inputMode="tel"
                   />
-                </div>
-                <div>
-                  <Label htmlFor="role">Role</Label>
+                </FormField>
+                <FormField label="Role">
                   <select
                     id="role"
                     value={formData.role}
                     onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                    className="w-full h-10 px-3 border border-input rounded-md text-sm bg-background text-foreground"
+                    className="w-full h-10 px-3 border border-input rounded-md text-sm bg-background text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
                     <option value="TEACHER">Teacher</option>
                     <option value="PARENT">Parent</option>
                     <option value="STAFF">Staff</option>
                     <option value="PRINCIPAL">Principal</option>
                   </select>
-                </div>
+                </FormField>
               </div>
-              {formError && <Alert variant="destructive"><AlertDescription>{formError}</AlertDescription></Alert>}
               <Button onClick={handleAddInvite} className="w-full">+ Add to List</Button>
             </CardContent>
           </Card>
@@ -2596,8 +2707,8 @@ function MembersView({ membership }: { membership: any }) {
               <CardContent>
                 <div className="space-y-3">
                   {invites.map((invite) => (
-                    <div key={invite.id} className="border border-border rounded-lg p-4">
-                      <div className="flex items-start justify-between mb-2">
+                    <div key={invite.id} className="border border-border rounded-lg p-4 hover:border-accent/30 transition-colors">
+                      <div className="flex items-start justify-between mb-3">
                         <div>
                           <p className="font-medium text-foreground">{invite.name}</p>
                           <p className="text-xs text-muted-foreground">{invite.phone} • {invite.role}</p>
@@ -2606,24 +2717,27 @@ function MembersView({ membership }: { membership: any }) {
                           size="sm"
                           variant="ghost"
                           onClick={() => handleRemoveInvite(invite.id)}
-                          className="h-6 w-6 p-0"
+                          className="h-6 w-6 p-0 text-destructive hover:bg-destructive/10"
                         >
                           ✕
                         </Button>
                       </div>
                       {invite.link ? (
                         <div
-                          className="bg-muted p-2 rounded text-xs font-mono break-all cursor-pointer hover:bg-muted/80"
+                          className="bg-muted p-3 rounded text-xs font-mono break-all cursor-pointer hover:bg-muted/80 transition-colors"
                           onClick={() => {
                             navigator.clipboard.writeText(invite.link);
-                            alert("Link copied!");
+                            setSuccess("Invite link copied to clipboard");
+                            setTimeout(() => setSuccess(undefined), 2000);
                           }}
-                          title="Click to copy"
+                          title="Click to copy invite link"
                         >
                           {invite.link}
                         </div>
                       ) : invite.status === "error" ? (
-                        <p className="text-xs text-destructive">Error: {invite.error}</p>
+                        <div className="bg-destructive/10 border border-destructive/30 rounded p-2">
+                          <p className="text-xs text-destructive">Error: {invite.error}</p>
+                        </div>
                       ) : (
                         <p className="text-xs text-muted-foreground">Click "Generate All Links" to create invite</p>
                       )}
@@ -2649,15 +2763,17 @@ function FinanceView({ membership }: { membership: any }) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">Total Fees</p>
+                <p className="text-xs font-medium text-muted-foreground mb-2">Total Fees</p>
                 <p className="text-2xl font-semibold text-foreground font-mono">₹2,45,000</p>
               </div>
-              <WalletIcon className="h-10 w-10 text-accent opacity-50" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                <WalletIcon className="h-5 w-5" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -2665,10 +2781,12 @@ function FinanceView({ membership }: { membership: any }) {
           <CardContent className="pt-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">Collected</p>
+                <p className="text-xs font-medium text-muted-foreground mb-2">Collected</p>
                 <p className="text-2xl font-semibold text-foreground font-mono">₹1,80,000</p>
               </div>
-              <WalletIcon className="h-10 w-10 text-accent opacity-50" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                <WalletIcon className="h-5 w-5" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -2676,10 +2794,12 @@ function FinanceView({ membership }: { membership: any }) {
           <CardContent className="pt-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">Pending</p>
+                <p className="text-xs font-medium text-muted-foreground mb-2">Pending</p>
                 <p className="text-2xl font-semibold text-destructive font-mono">₹65,000</p>
               </div>
-              <WalletIcon className="h-10 w-10 text-destructive opacity-50" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+                <WalletIcon className="h-5 w-5" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -2691,11 +2811,11 @@ function FinanceView({ membership }: { membership: any }) {
           <CardDescription>Manage fee structures, payments, and expenses</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <Button variant="outline" className="w-full justify-start">Manage Fee Structures</Button>
-            <Button variant="outline" className="w-full justify-start">Record Payment</Button>
-            <Button variant="outline" className="w-full justify-start">Track Expenses</Button>
-            <Button variant="outline" className="w-full justify-start">View Reports</Button>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <Button variant="outline" className="justify-center">Manage Fee Structures</Button>
+            <Button variant="outline" className="justify-center">Record Payment</Button>
+            <Button variant="outline" className="justify-center">Track Expenses</Button>
+            <Button variant="outline" className="justify-center">View Reports</Button>
           </div>
         </CardContent>
       </Card>
@@ -2861,14 +2981,13 @@ function AttendanceView({ membership }: { membership: any }) {
         </div>
 
         {/* Class Section & Date Selectors - Stacked on mobile */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="section">Class Section</Label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField label="Class Section">
             <select
               id="section"
               value={selectedSection}
               onChange={(e) => setSelectedSection(e.target.value)}
-              className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
               disabled={loading}
             >
               <option value="">Select a class...</option>
@@ -2878,10 +2997,9 @@ function AttendanceView({ membership }: { membership: any }) {
                 </option>
               ))}
             </select>
-          </div>
+          </FormField>
 
-          <div className="space-y-2">
-            <Label htmlFor="date">Date</Label>
+          <FormField label="Date">
             <Input
               id="date"
               type="date"
@@ -2890,7 +3008,7 @@ function AttendanceView({ membership }: { membership: any }) {
               max={new Date().toISOString().split("T")[0]}
               className="w-full h-10"
             />
-          </div>
+          </FormField>
         </div>
       </div>
 
@@ -3001,16 +3119,31 @@ function AttendanceView({ membership }: { membership: any }) {
 
       {!loading && students.length === 0 && selectedSection && (
         <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-sm text-muted-foreground">No enrolled students in this class</p>
+          <CardContent className="py-12">
+            <EmptyState
+              icon={<UsersIcon />}
+              title="No students in this class"
+              description="This class section has no enrolled students yet. Add students to start marking attendance."
+            />
           </CardContent>
         </Card>
       )}
 
       {!selectedSection && !loading && (
         <Card>
-          <CardContent className="py-12 text-center">
-            <p className="text-sm text-muted-foreground">Select a class section to begin marking attendance</p>
+          <CardContent className="py-12">
+            <EmptyState
+              title="Select a class section"
+              description="Choose a class section and date to begin marking attendance for your students"
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {loading && (
+        <Card>
+          <CardContent className="py-12">
+            <LoadingState message="Loading class sections…" />
           </CardContent>
         </Card>
       )}
@@ -3126,20 +3259,18 @@ function RoleManagement() {
           <CardTitle className="text-lg">Grant App-Level Role</CardTitle>
           <CardDescription>Assign APP_ADMIN or APP_SUPPORT role to a user</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="grant-phone">User Phone</Label>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <FormField label="User Phone" required>
               <Input
                 id="grant-phone"
                 value={grantingPhone}
                 onChange={(e) => setGrantingPhone(e.target.value)}
-                placeholder="+91 98765 43210"
+                placeholder="+919876543210"
                 inputMode="tel"
               />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="grant-role">Role</Label>
+            </FormField>
+            <FormField label="Role">
               <select
                 id="grant-role"
                 value={grantingRole}
@@ -3149,9 +3280,9 @@ function RoleManagement() {
                 <option value="APP_ADMIN">App Admin</option>
                 <option value="APP_SUPPORT">App Support</option>
               </select>
-            </div>
+            </FormField>
             <div className="flex items-end">
-              <Button onClick={handleGrantRole} className="w-full">
+              <Button onClick={handleGrantRole} className="w-full h-10">
                 Grant Role
               </Button>
             </div>
@@ -3161,39 +3292,42 @@ function RoleManagement() {
 
       {/* Users Table */}
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="flex flex-col items-center gap-3">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-foreground"></div>
-            <p className="text-sm text-muted-foreground">Loading users…</p>
-          </div>
-        </div>
+        <Card>
+          <CardContent className="py-12">
+            <LoadingState message="Loading users…" />
+          </CardContent>
+        </Card>
       ) : users.length > 0 ? (
         <Card>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="px-6 py-3 text-left font-semibold text-foreground">Phone</th>
+                  <th className="hidden sm:table-cell px-6 py-3 text-left font-semibold text-foreground">Phone</th>
                   <th className="px-6 py-3 text-left font-semibold text-foreground">Display Name</th>
-                  <th className="px-6 py-3 text-left font-semibold text-foreground">App-Level Roles</th>
+                  <th className="px-6 py-3 text-left font-semibold text-foreground">Roles</th>
                   <th className="px-6 py-3 text-center font-semibold text-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {users.map((user) => (
                   <tr key={user.id} className="border-b border-border hover:bg-muted/30 transition-colors">
-                    <td className="px-6 py-4 font-mono text-xs text-muted-foreground">{user.phone}</td>
-                    <td className="px-6 py-4 text-foreground">{user.displayName}</td>
+                    <td className="hidden sm:table-cell px-6 py-4 font-mono text-xs text-muted-foreground">{user.phone}</td>
+                    <td className="px-6 py-4 text-foreground">
+                      <div>
+                        <p className="font-medium">{user.displayName}</p>
+                        <p className="sm:hidden text-xs font-mono text-muted-foreground">{user.phone}</p>
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
                       {user.roles.length > 0 ? (
                         <div className="flex flex-wrap gap-2">
                           {user.roles.map((r) => (
-                            <span
+                            <StatusBadge
                               key={r.role}
-                              className="inline-block px-2 py-1 rounded text-xs font-medium bg-accent/10 text-accent"
-                            >
-                              {r.role}
-                            </span>
+                              status={r.role.replace("APP_", "")}
+                              variant="info"
+                            />
                           ))}
                         </div>
                       ) : (
@@ -3212,7 +3346,7 @@ function RoleManagement() {
                               disabled={revoking === `${user.phone}-${r.role}`}
                               className="h-8 px-2 text-destructive hover:bg-destructive/10"
                             >
-                              {revoking === `${user.phone}-${r.role}` ? "Revoking…" : "Revoke"}
+                              {revoking === `${user.phone}-${r.role}` ? "…" : "Revoke"}
                             </Button>
                           ))}
                         </div>
@@ -3226,9 +3360,12 @@ function RoleManagement() {
         </Card>
       ) : (
         <Card>
-          <CardContent className="py-12 text-center">
-            <UsersIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground opacity-50" />
-            <p className="text-sm text-muted-foreground">No users with app-level roles yet</p>
+          <CardContent className="py-12">
+            <EmptyState
+              icon={<UsersIcon />}
+              title="No users with app-level roles yet"
+              description="Use the form above to grant APP_ADMIN or APP_SUPPORT roles to users"
+            />
           </CardContent>
         </Card>
       )}
@@ -3517,115 +3654,103 @@ function AdminPortal({
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="school-name">School Name *</Label>
-                        <Input
-                          id="school-name"
-                          value={formData.schoolName}
-                          onChange={(e) => setFormData({ ...formData, schoolName: e.target.value })}
-                          placeholder="e.g., St. Xavier's Academy"
-                          disabled={submitting}
-                        />
+                    <form onSubmit={handleSubmit} className="space-y-6">
+                      {error && <ErrorMessage message={error} />}
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FormField label="School Name" required>
+                          <Input
+                            id="school-name"
+                            value={formData.schoolName}
+                            onChange={(e) => setFormData({ ...formData, schoolName: e.target.value })}
+                            placeholder="e.g., St. Xavier's Academy"
+                            disabled={submitting}
+                          />
+                        </FormField>
+
+                        <FormField label="Status">
+                          <select
+                            id="status"
+                            value={formData.status}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                status: e.target.value as "TRIAL" | "ACTIVE" | "SUSPENDED" | "CANCELLED",
+                              })
+                            }
+                            className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                            disabled={submitting}
+                          >
+                            <option value="TRIAL">Trial</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="SUSPENDED">Suspended</option>
+                            <option value="CANCELLED">Cancelled</option>
+                          </select>
+                        </FormField>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label htmlFor="status">Status *</Label>
-                        <select
-                          id="status"
-                          value={formData.status}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              status: e.target.value as "TRIAL" | "ACTIVE" | "SUSPENDED" | "CANCELLED",
-                            })
-                          }
-                          className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FormField label="Admin First Name" required>
+                          <Input
+                            id="admin-first"
+                            value={formData.adminFirstName}
+                            onChange={(e) => setFormData({ ...formData, adminFirstName: e.target.value })}
+                            placeholder="e.g., John"
+                            disabled={submitting}
+                          />
+                        </FormField>
+
+                        <FormField label="Admin Last Name" required>
+                          <Input
+                            id="admin-last"
+                            value={formData.adminLastName}
+                            onChange={(e) => setFormData({ ...formData, adminLastName: e.target.value })}
+                            placeholder="e.g., Doe"
+                            disabled={submitting}
+                          />
+                        </FormField>
+                      </div>
+
+                      <FormField label="Admin Phone" required hint={editingId ? "Phone cannot be changed for existing schools" : undefined}>
+                        <Input
+                          id="admin-phone"
+                          value={formData.adminPhone}
+                          onChange={(e) => setFormData({ ...formData, adminPhone: e.target.value })}
+                          placeholder="+919876543210"
+                          inputMode="tel"
+                          disabled={submitting || !!editingId}
+                        />
+                      </FormField>
+
+                      <div className="flex gap-3 pt-2">
+                        <Button type="submit" disabled={submitting}>
+                          {submitting ? "Saving…" : editingId ? "Update School" : "Create School"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => {
+                            setShowForm(false);
+                            setEditingId(null);
+                            setError(undefined);
+                          }}
                           disabled={submitting}
                         >
-                          <option value="TRIAL">Trial</option>
-                          <option value="ACTIVE">Active</option>
-                          <option value="SUSPENDED">Suspended</option>
-                          <option value="CANCELLED">Cancelled</option>
-                        </select>
+                          Cancel
+                        </Button>
                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="admin-first">Admin First Name *</Label>
-                        <Input
-                          id="admin-first"
-                          value={formData.adminFirstName}
-                          onChange={(e) => setFormData({ ...formData, adminFirstName: e.target.value })}
-                          placeholder="e.g., John"
-                          disabled={submitting}
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="admin-last">Admin Last Name *</Label>
-                        <Input
-                          id="admin-last"
-                          value={formData.adminLastName}
-                          onChange={(e) => setFormData({ ...formData, adminLastName: e.target.value })}
-                          placeholder="e.g., Doe"
-                          disabled={submitting}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="admin-phone">Admin Phone *</Label>
-                      <Input
-                        id="admin-phone"
-                        value={formData.adminPhone}
-                        onChange={(e) => setFormData({ ...formData, adminPhone: e.target.value })}
-                        placeholder="+91 98765 43210"
-                        inputMode="tel"
-                        disabled={submitting || !!editingId}
-                      />
-                      {editingId && (
-                        <p className="text-xs text-muted-foreground">Phone cannot be changed for existing schools</p>
-                      )}
-                    </div>
-
-                    {error && (
-                      <Alert variant="destructive">
-                        <AlertDescription>{error}</AlertDescription>
-                      </Alert>
-                    )}
-
-                    <div className="flex gap-3">
-                      <Button type="submit" disabled={submitting}>
-                        {submitting ? "Saving…" : editingId ? "Update School" : "Create School"}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setShowForm(false);
-                          setEditingId(null);
-                        }}
-                        disabled={submitting}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </form>
-                </CardContent>
+                    </form>
+                  </CardContent>
               </Card>
             )}
 
             {/* Schools Table */}
             {loading ? (
-              <div className="flex justify-center py-12">
-                <div className="flex flex-col items-center gap-3">
-                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-border border-t-foreground"></div>
-                  <p className="text-sm text-muted-foreground">Loading schools…</p>
-                </div>
-              </div>
+              <Card>
+                <CardContent className="py-12">
+                  <LoadingState message="Loading schools…" />
+                </CardContent>
+              </Card>
             ) : tenants.length > 0 ? (
               <Card>
                 <div className="overflow-x-auto">
@@ -3633,11 +3758,11 @@ function AdminPortal({
                     <thead>
                       <tr className="border-b border-border bg-muted/30">
                         <th className="px-6 py-3 text-left font-semibold text-foreground">School Name</th>
-                        <th className="px-6 py-3 text-left font-semibold text-foreground">Admin Name</th>
+                        <th className="hidden sm:table-cell px-6 py-3 text-left font-semibold text-foreground">Admin</th>
                         <th className="px-6 py-3 text-left font-semibold text-foreground">Phone</th>
-                        <th className="px-6 py-3 text-left font-semibold text-foreground">School Code</th>
+                        <th className="hidden md:table-cell px-6 py-3 text-left font-semibold text-foreground">Code</th>
                         <th className="px-6 py-3 text-left font-semibold text-foreground">Status</th>
-                        <th className="px-6 py-3 text-center font-semibold text-foreground">Students</th>
+                        <th className="hidden md:table-cell px-6 py-3 text-center font-semibold text-foreground">Students</th>
                         <th className="px-6 py-3 text-center font-semibold text-foreground">Actions</th>
                       </tr>
                     </thead>
@@ -3648,7 +3773,7 @@ function AdminPortal({
                           className="border-b border-border hover:bg-muted/30 transition-colors"
                         >
                           <td className="px-6 py-4 text-foreground font-medium">{tenant.name}</td>
-                          <td className="px-6 py-4 text-foreground">{tenant.adminName || "N/A"}</td>
+                          <td className="hidden sm:table-cell px-6 py-4 text-foreground text-sm">{tenant.adminName || "—"}</td>
                           <td className="px-6 py-4">
                             {editingPhoneId === tenant.id ? (
                               <div className="flex gap-2">
@@ -3666,7 +3791,7 @@ function AdminPortal({
                                   disabled={updatingPhone}
                                   className="h-8 px-2"
                                 >
-                                  ✓
+                                  <CheckIcon />
                                 </Button>
                                 <Button
                                   size="sm"
@@ -3678,11 +3803,11 @@ function AdminPortal({
                                   disabled={updatingPhone}
                                   className="h-8 px-2"
                                 >
-                                  ✕
+                                  <CloseIcon />
                                 </Button>
                               </div>
                             ) : (
-                              <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center justify-between gap-2 group">
                                 <span className="font-mono text-xs text-muted-foreground">{tenant.adminPhone}</span>
                                 <Button
                                   size="sm"
@@ -3691,32 +3816,23 @@ function AdminPortal({
                                     setEditingPhoneId(tenant.id);
                                     setNewAdminPhone("");
                                   }}
-                                  className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"
+                                  className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                                 >
-                                  ✎
+                                  <PencilIcon />
                                 </Button>
                               </div>
                             )}
                           </td>
-                          <td className="px-6 py-4 font-mono text-xs text-muted-foreground">
+                          <td className="hidden md:table-cell px-6 py-4 font-mono text-xs text-muted-foreground">
                             {tenant.schoolCode}
                           </td>
                           <td className="px-6 py-4">
-                            <span
-                              className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                                tenant.status === "ACTIVE"
-                                  ? "bg-accent/10 text-accent"
-                                  : tenant.status === "TRIAL"
-                                    ? "bg-foreground/10 text-foreground"
-                                    : tenant.status === "SUSPENDED"
-                                      ? "bg-destructive/10 text-destructive"
-                                      : "bg-muted text-muted-foreground"
-                              }`}
-                            >
-                              {tenant.status}
-                            </span>
+                            <StatusBadge
+                              status={tenant.status.toLowerCase()}
+                              variant={tenant.status === "ACTIVE" ? "success" : tenant.status === "TRIAL" ? "info" : tenant.status === "SUSPENDED" ? "warning" : "default"}
+                            />
                           </td>
-                          <td className="px-6 py-4 text-center font-mono text-foreground font-medium">
+                          <td className="hidden md:table-cell px-6 py-4 text-center font-mono text-foreground font-medium">
                             {tenant._count.students}
                           </td>
                           <td className="px-6 py-4 text-center">
@@ -3735,7 +3851,7 @@ function AdminPortal({
                                 onClick={() => handleDelete(tenant.id, tenant.name)}
                                 className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
                               >
-                                ✕
+                                <CloseIcon />
                               </Button>
                             </div>
                           </td>
@@ -3747,12 +3863,13 @@ function AdminPortal({
               </Card>
                 ) : (
                   <Card>
-                    <CardContent className="py-12 text-center">
-                      <BuildingsIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground opacity-50" />
-                      <p className="text-sm text-muted-foreground">No schools yet</p>
-                      <Button onClick={() => openForm()} className="mt-4">
-                        Create the first school
-                      </Button>
+                    <CardContent className="py-12">
+                      <EmptyState
+                        icon={<BuildingsIcon />}
+                        title="No schools yet"
+                        description="Create and manage schools on your platform"
+                        action={{ label: "Create the first school", onClick: () => openForm() }}
+                      />
                     </CardContent>
                   </Card>
                 )}
