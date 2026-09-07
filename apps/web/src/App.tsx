@@ -124,6 +124,26 @@ const SettingsIcon = () => (
   </svg>
 );
 
+const CheckIcon = ({ className = "h-4 w-4" }: { className?: string } = {}) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <polyline points="20 6 9 17 4 12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const CloseIcon = ({ className = "h-4 w-4" }: { className?: string } = {}) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <line x1="18" y1="6" x2="6" y2="18" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <line x1="6" y1="6" x2="18" y2="18" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const PencilIcon = ({ className = "h-4 w-4" }: { className?: string } = {}) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 export default function App() {
   const [user, setUser] = useState<SessionUser | null>(null);
   const [booting, setBooting] = useState(true);
@@ -1053,7 +1073,7 @@ function StudentsView({
                             disabled={inlineUpdating}
                             className="h-8 px-2"
                           >
-                            ✓
+                            <CheckIcon />
                           </Button>
                           <Button
                             size="sm"
@@ -1066,7 +1086,7 @@ function StudentsView({
                             disabled={inlineUpdating}
                             className="h-8 px-2"
                           >
-                            ✕
+                            <CloseIcon />
                           </Button>
                         </div>
                       ) : (
@@ -1082,7 +1102,7 @@ function StudentsView({
                             }}
                             className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                           >
-                            ✎
+                            <PencilIcon />
                           </Button>
                         </div>
                       )}
@@ -1107,7 +1127,7 @@ function StudentsView({
                             disabled={inlineUpdating}
                             className="h-8 px-2"
                           >
-                            ✓
+                            <CheckIcon />
                           </Button>
                           <Button
                             size="sm"
@@ -1120,7 +1140,7 @@ function StudentsView({
                             disabled={inlineUpdating}
                             className="h-8 px-2"
                           >
-                            ✕
+                            <CloseIcon />
                           </Button>
                         </div>
                       ) : (
@@ -1146,7 +1166,7 @@ function StudentsView({
                             }}
                             className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                           >
-                            ✎
+                            <PencilIcon />
                           </Button>
                         </div>
                       )}
@@ -1345,11 +1365,17 @@ function ClassesView({ membership }: { membership: any }) {
 
   const handleCreateLevel = async () => {
     if (!levelName || !levelRank) return;
+    const rank = parseInt(levelRank, 10);
+    if (isNaN(rank) || rank <= 0) return;
+    if (levels.some((l) => l.rank === rank)) {
+      alert("A level with this rank already exists");
+      return;
+    }
     try {
       const res = await apiFetch<any>("/class-levels", {
         tenantId: membership.tenantId,
         method: "POST",
-        body: JSON.stringify({ name: levelName, rank: parseInt(levelRank) }),
+        body: JSON.stringify({ name: levelName, rank }),
       });
       setLevels([...levels, res]);
       setLevelName("");
@@ -1839,9 +1865,9 @@ function CommunicationView({ membership }: { membership: any }) {
                         <p className="text-xs text-muted-foreground">{msg.recipientRole} · {msg.channel}</p>
                       </div>
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        msg.status === "SENT" ? "bg-green-100 text-green-800" :
-                        msg.status === "SCHEDULED" ? "bg-blue-100 text-blue-800" :
-                        "bg-gray-100 text-gray-800"
+                        msg.status === "SENT" ? "bg-accent/10 text-accent" :
+                        msg.status === "SCHEDULED" ? "bg-input text-input-foreground" :
+                        "bg-muted text-muted-foreground"
                       }`}>
                         {msg.status}
                       </span>
@@ -1869,9 +1895,9 @@ function CommunicationView({ membership }: { membership: any }) {
               </div>
               <button
                 onClick={() => setSelectedTemplate(null)}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground p-1"
               >
-                ✕
+                <CloseIcon className="h-5 w-5" />
               </button>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -2016,7 +2042,7 @@ function AttendanceView({ membership }: { membership: any }) {
   async function loadClassSections() {
     try {
       setLoading(true);
-      const res = await apiFetch<{ items: ClassSection[] }>("/class-sections");
+      const res = await apiFetch<{ items: ClassSection[] }>("/class-sections", { tenantId: membership.tenantId });
       setClassSections(res.items);
       if (res.items.length > 0) {
         setSelectedSection(res.items[0]!.id);
@@ -2037,7 +2063,8 @@ function AttendanceView({ membership }: { membership: any }) {
   async function loadStudents() {
     try {
       const res = await apiFetch<{ items: AttendanceStudent[] }>(
-        `/class-sections/${selectedSection}/students-for-attendance`
+        `/class-sections/${selectedSection}/students-for-attendance`,
+        { tenantId: membership.tenantId }
       );
       setStudents(res.items);
       setAttendance({});
@@ -2108,6 +2135,7 @@ function AttendanceView({ membership }: { membership: any }) {
           date: attendanceDate,
           records,
         }),
+        tenantId: membership.tenantId,
       });
 
       addToast(

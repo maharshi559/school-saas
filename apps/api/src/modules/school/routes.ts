@@ -12,7 +12,7 @@ export async function schoolRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const levels = await prisma.classLevel.findMany({
         where: { tenantId: request.tenant.id },
-        orderBy: { order: "asc" },
+        orderBy: { rank: "asc" },
       });
       return reply.send({ items: levels });
     }
@@ -26,7 +26,7 @@ export async function schoolRoutes(app: FastifyInstance) {
       const { name, rank } = z
         .object({
           name: z.string().min(1),
-          rank: z.number().int(),
+          rank: z.number().int().default(0),
         })
         .parse(request.body);
 
@@ -113,7 +113,7 @@ export async function schoolRoutes(app: FastifyInstance) {
       const { name } = z.object({ name: z.string().min(1) }).parse(request.body);
 
       const section = await prisma.classSection.update({
-        where: { id },
+        where: { id, tenantId: request.tenant.id },
         data: { name },
         include: { classLevel: true, academicYear: true },
       });
