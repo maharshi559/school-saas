@@ -662,11 +662,11 @@ function AppShell({
         </div>
       </header>
 
-      {/* Main content with sidebar */}
+      {/* Main content with sidebar (desktop) and bottom nav (mobile) */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Sidebar */}
-        <aside className="w-64 border-r border-border bg-card overflow-y-auto">
-          <nav className="space-y-6 p-4">
+        {/* Desktop Sidebar - Hidden on mobile */}
+        <aside className="hidden lg:flex lg:w-64 border-r border-border bg-card overflow-y-auto">
+          <nav className="w-full space-y-6 p-4">
             {sidebarGroups.map((group) => (
               <div key={group.group}>
                 <p className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -694,8 +694,8 @@ function AppShell({
         </aside>
 
         {/* Main content */}
-        <main className="flex-1 overflow-auto">
-          <div className="mx-auto max-w-6xl px-6 py-8">
+        <main className="flex-1 overflow-auto pb-20 lg:pb-8">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6 py-8 lg:py-8">
             {active.length === 0 ? (
               <Alert variant="default">
                 <AlertDescription>
@@ -750,6 +750,26 @@ function AppShell({
           </div>
         </main>
       </div>
+
+      {/* Mobile Bottom Navigation - Visible only on mobile */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 border-t border-border bg-card px-0">
+        <div className="flex items-center justify-around h-16 overflow-x-auto">
+          {sidebarGroups.flatMap((group) => group.items).slice(0, 5).map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveView(item.id)}
+              className={`flex flex-col items-center justify-center h-16 min-w-16 transition-colors ${
+                activeView === item.id
+                  ? "text-accent border-t-2 border-accent"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <div className="text-xl">{item.icon}</div>
+              <span className="text-xs mt-1">{item.label}</span>
+            </button>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }
