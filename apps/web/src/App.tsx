@@ -1421,7 +1421,7 @@ function ClassesView({ membership }: { membership: any }) {
               <>
                 <div>
                   <Label htmlFor="levelSelect">Class</Label>
-                  <select id="levelSelect" value={selectedLevelId} onChange={(e) => setSelectedLevelId(e.target.value)} className="w-full px-3 py-2 border border-input rounded-md text-sm">
+                  <select id="levelSelect" value={selectedLevelId} onChange={(e) => setSelectedLevelId(e.target.value)} className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground">
                     <option value="">Select a class</option>
                     {levels.map((l) => (
                       <option key={l.id} value={l.id}>{l.name}</option>
@@ -1430,7 +1430,7 @@ function ClassesView({ membership }: { membership: any }) {
                 </div>
                 <div>
                   <Label htmlFor="yearSelect">Academic Year</Label>
-                  <select id="yearSelect" value={selectedYearId} onChange={(e) => setSelectedYearId(e.target.value)} className="w-full px-3 py-2 border border-input rounded-md text-sm">
+                  <select id="yearSelect" value={selectedYearId} onChange={(e) => setSelectedYearId(e.target.value)} className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground">
                     <option value="">Select a year</option>
                     {years.map((y) => (
                       <option key={y.id} value={y.id}>{y.year}</option>
@@ -1493,6 +1493,7 @@ function CommunicationView({ membership }: { membership: any }) {
   const [templates, setTemplates] = useState<any[]>([]);
   const [history, setHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
 
   // Form state for sending messages
   const [templateId, setTemplateId] = useState("");
@@ -1613,7 +1614,7 @@ function CommunicationView({ membership }: { membership: any }) {
                 id="useTemplate"
                 value={templateId}
                 onChange={(e) => setTemplateId(e.target.value)}
-                className="w-full px-3 py-2 border border-input rounded-md text-sm"
+                className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground"
               >
                 <option value="">Custom Message</option>
                 {templates.map((t) => (
@@ -1630,7 +1631,7 @@ function CommunicationView({ membership }: { membership: any }) {
                   placeholder="Type your message here..."
                   value={customMessage}
                   onChange={(e) => setCustomMessage(e.target.value)}
-                  className="w-full px-3 py-2 border border-input rounded-md text-sm h-24"
+                  className="w-full px-3 py-2 border border-input rounded-md text-sm h-24 bg-background text-foreground"
                 />
               </div>
             )}
@@ -1741,7 +1742,7 @@ function CommunicationView({ membership }: { membership: any }) {
                   placeholder="Use {{variable}} for placeholders (e.g., {{schoolName}}, {{date}})"
                   value={templateContent}
                   onChange={(e) => setTemplateContent(e.target.value)}
-                  className="w-full px-3 py-2 border border-input rounded-md text-sm h-20"
+                  className="w-full px-3 py-2 border border-input rounded-md text-sm h-20 bg-background text-foreground"
                 />
               </div>
 
@@ -1750,13 +1751,41 @@ function CommunicationView({ membership }: { membership: any }) {
 
             <div className="space-y-2">
               <h3 className="font-medium text-sm">Existing Templates</h3>
-              {templates.map((t) => (
-                <div key={t.id} className="p-3 border border-border rounded-md text-sm">
-                  <p className="font-medium">{t.name}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{t.type} · {t.channel}</p>
-                  <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{t.content}</p>
+              {templates.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border bg-muted/30">
+                        <th className="px-4 py-3 text-left font-semibold">Name</th>
+                        <th className="px-4 py-3 text-left font-semibold">Type</th>
+                        <th className="px-4 py-3 text-left font-semibold">Channel</th>
+                        <th className="px-4 py-3 text-left font-semibold">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {templates.map((t) => (
+                        <tr key={t.id} className="border-b border-border hover:bg-muted/30 cursor-pointer">
+                          <td className="px-4 py-3 font-medium">{t.name}</td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground">{t.type}</td>
+                          <td className="px-4 py-3 text-xs text-muted-foreground">{t.channel}</td>
+                          <td className="px-4 py-3">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setSelectedTemplate(t)}
+                              className="text-xs"
+                            >
+                              View
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              ))}
+              ) : (
+                <p className="text-xs text-muted-foreground text-center py-4">No templates created yet</p>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -1795,6 +1824,64 @@ function CommunicationView({ membership }: { membership: any }) {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {selectedTemplate && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <CardHeader className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">{selectedTemplate.name}</CardTitle>
+                <CardDescription>
+                  {selectedTemplate.type} · {selectedTemplate.channel}
+                </CardDescription>
+              </div>
+              <button
+                onClick={() => setSelectedTemplate(null)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                ✕
+              </button>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Template Content</Label>
+                <div className="mt-2 p-3 bg-muted rounded-md border border-border text-sm whitespace-pre-wrap">
+                  {selectedTemplate.content}
+                </div>
+              </div>
+
+              {selectedTemplate.content.includes("{{") && (
+                <div>
+                  <Label className="text-sm font-medium">Available Variables</Label>
+                  <div className="mt-2 text-xs text-muted-foreground space-y-1">
+                    <p>Use these placeholders in your template:</p>
+                    <ul className="list-disc pl-5">
+                      <li>{{"{"}}{"{"}schoolName{"}"}{"}"}} - School name</li>
+                      <li>{{"{"}}{"{"}date{"}"}{"}"}} - Current date</li>
+                      <li>{{"{"}}{"{"}time{"}"}{"}"}} - Current time</li>
+                      <li>{{"{"}}{"{"}reason{"}"}{"}"}} - Custom reason</li>
+                      <li>{{"{"}}{"{"}name{"}"}{"}"}} - Recipient name</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2 justify-end pt-4">
+                <Button variant="outline" onClick={() => setSelectedTemplate(null)}>
+                  Close
+                </Button>
+                <Button onClick={() => {
+                  setTemplateId(selectedTemplate.id);
+                  setTab("send");
+                  setSelectedTemplate(null);
+                }}>
+                  Use This Template
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
