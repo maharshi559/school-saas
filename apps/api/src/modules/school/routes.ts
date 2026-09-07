@@ -46,7 +46,7 @@ export async function schoolRoutes(app: FastifyInstance) {
     async (request, reply) => {
       const years = await prisma.academicYear.findMany({
         where: { tenantId: request.tenant.id },
-        orderBy: { year: "desc" },
+        orderBy: { name: "desc" },
       });
       return reply.send({ items: years });
     }
@@ -67,7 +67,7 @@ export async function schoolRoutes(app: FastifyInstance) {
 
       const acy = await prisma.academicYear.create({
         data: {
-          year,
+          name: year,
           startDate: new Date(startDate),
           endDate: new Date(endDate),
           tenantId: request.tenant.id,

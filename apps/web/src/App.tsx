@@ -962,7 +962,7 @@ function StudentsView({
                     <option value="">Select a class and section</option>
                     {sections.map((s) => (
                       <option key={s.id} value={s.id}>
-                        {s.classLevel?.name} - {s.name} ({s.academicYear?.year})
+                        {s.classLevel?.name} - {s.name} ({s.academicYear?.name})
                       </option>
                     ))}
                   </select>
@@ -1464,7 +1464,7 @@ function ClassesView({ membership }: { membership: any }) {
                   <select id="yearSelect" value={selectedYearId} onChange={(e) => setSelectedYearId(e.target.value)} className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground">
                     <option value="">Select a year</option>
                     {years.map((y) => (
-                      <option key={y.id} value={y.id}>{y.year}</option>
+                      <option key={y.id} value={y.id}>{y.name}</option>
                     ))}
                   </select>
                 </div>
@@ -1500,7 +1500,7 @@ function ClassesView({ membership }: { membership: any }) {
                   <tr key={section.id} className="border-b border-border hover:bg-muted/30">
                     <td className="px-6 py-4 font-medium">{section.classLevel?.name}</td>
                     <td className="px-6 py-4">{section.name}</td>
-                    <td className="px-6 py-4 text-sm text-muted-foreground">{section.academicYear?.year}</td>
+                    <td className="px-6 py-4 text-sm text-muted-foreground">{section.academicYear?.name}</td>
                   </tr>
                 ))}
               </tbody>
