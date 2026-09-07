@@ -1367,6 +1367,10 @@ function ClassesView({ membership }: { membership: any }) {
     if (!levelName || !levelRank) return;
     const rank = parseInt(levelRank, 10);
     if (isNaN(rank) || rank <= 0) return;
+    if (levels.some((l) => l.name === levelName)) {
+      alert(`Class level "${levelName}" already exists`);
+      return;
+    }
     if (levels.some((l) => l.rank === rank)) {
       alert("A level with this rank already exists");
       return;
@@ -1382,12 +1386,24 @@ function ClassesView({ membership }: { membership: any }) {
       setLevelRank("0");
       setFormStep("year");
     } catch (e) {
-      console.error(e);
+      const errorMsg = e instanceof Error ? e.message : "Failed to create class level";
+      if (errorMsg.includes("Unique constraint")) {
+        alert(`Class level "${levelName}" already exists for this school`);
+      } else {
+        alert(errorMsg);
+      }
     }
   };
 
   const handleCreateYear = async () => {
     if (!yearValue || !startDate || !endDate) return;
+
+    // Check if year already exists
+    if (years.some((y) => y.name === yearValue)) {
+      alert(`Academic year "${yearValue}" already exists`);
+      return;
+    }
+
     try {
       const res = await apiFetch<any>("/academic-years", {
         tenantId: membership.tenantId,
@@ -1400,12 +1416,24 @@ function ClassesView({ membership }: { membership: any }) {
       setEndDate("");
       setFormStep("section");
     } catch (e) {
-      console.error(e);
+      const errorMsg = e instanceof Error ? e.message : "Failed to create academic year";
+      if (errorMsg.includes("Unique constraint")) {
+        alert(`Academic year "${yearValue}" already exists for this school`);
+      } else {
+        alert(errorMsg);
+      }
     }
   };
 
   const handleCreateSection = async () => {
     if (!sectionName || !selectedLevelId || !selectedYearId) return;
+
+    // Check if section already exists for this level and year
+    if (sections.some((s) => s.classLevelId === selectedLevelId && s.academicYearId === selectedYearId && s.name === sectionName)) {
+      alert(`Section "${sectionName}" already exists for this class and year`);
+      return;
+    }
+
     try {
       const res = await apiFetch<any>("/class-sections", {
         tenantId: membership.tenantId,
@@ -1419,7 +1447,12 @@ function ClassesView({ membership }: { membership: any }) {
       setShowForm(false);
       setFormStep("level");
     } catch (e) {
-      console.error(e);
+      const errorMsg = e instanceof Error ? e.message : "Failed to create section";
+      if (errorMsg.includes("Unique constraint")) {
+        alert(`Section "${sectionName}" already exists for this class and year`);
+      } else {
+        alert(errorMsg);
+      }
     }
   };
 

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git hash-object *)",
+      "Bash(git commit -m 'Add validation and error handling for duplicate class/year/section creation *)"
+    ]
+  }
+}
