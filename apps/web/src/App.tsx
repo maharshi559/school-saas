@@ -549,6 +549,14 @@ function AppShell({
     };
   }, [activeView, tenantId, membership?.tenantId]);
 
+  const navItems = [
+    { id: "dashboard" as const, label: "Dashboard", icon: <DashboardIcon /> },
+    { id: "members" as const, label: "Members", icon: <UsersIcon /> },
+    { id: "students" as const, label: "Students", icon: <UsersIcon /> },
+    { id: "teachers" as const, label: "Teachers", icon: <TeachersIcon /> },
+    { id: "classes" as const, label: "Classes", icon: <BookIcon /> },
+  ];
+
   const sidebarGroups = [
     {
       group: "Overview",
@@ -732,16 +740,39 @@ function AppShell({
                 {/* Content by View */}
                 {activeView === "dashboard" && <DashboardView membership={membership} />}
                 {activeView === "students" && (
-                  <StudentsView
-                    membership={membership}
-                    students={students}
-                    note={note}
-                  />
+                  <div className="space-y-6">
+                    <BackButton onClick={() => setActiveView("dashboard")} />
+                    <StudentsView
+                      membership={membership}
+                      students={students}
+                      note={note}
+                    />
+                  </div>
                 )}
-                {activeView === "teachers" && <TeachersView membership={membership} />}
-                {activeView === "classes" && <ClassesView membership={membership} />}
-                {activeView === "attendance" && <AttendanceView membership={membership} />}
-                {activeView === "finance" && <FinanceView membership={membership} />}
+                {activeView === "teachers" && (
+                  <div className="space-y-6">
+                    <BackButton onClick={() => setActiveView("dashboard")} />
+                    <TeachersView membership={membership} />
+                  </div>
+                )}
+                {activeView === "classes" && (
+                  <div className="space-y-6">
+                    <BackButton onClick={() => setActiveView("dashboard")} />
+                    <ClassesView membership={membership} />
+                  </div>
+                )}
+                {activeView === "attendance" && (
+                  <div className="space-y-6">
+                    <BackButton onClick={() => setActiveView("dashboard")} />
+                    <AttendanceView membership={membership} />
+                  </div>
+                )}
+                {activeView === "finance" && (
+                  <div className="space-y-6">
+                    <BackButton onClick={() => setActiveView("dashboard")} />
+                    <FinanceView membership={membership} />
+                  </div>
+                )}
                 {activeView === "consent" && (
                   <div className="space-y-6">
                     <BackButton onClick={() => setActiveView("dashboard")} />
@@ -758,8 +789,18 @@ function AppShell({
                     </Card>
                   </div>
                 )}
-                {activeView === "communication" && <CommunicationView membership={membership} />}
-                {activeView === "members" && <MembersView membership={membership} />}
+                {activeView === "communication" && (
+                  <div className="space-y-6">
+                    <BackButton onClick={() => setActiveView("dashboard")} />
+                    <CommunicationView membership={membership} />
+                  </div>
+                )}
+                {activeView === "members" && (
+                  <div className="space-y-6">
+                    <BackButton onClick={() => setActiveView("dashboard")} />
+                    <MembersView membership={membership} />
+                  </div>
+                )}
                 {activeView === "account" && (
                   <div className="space-y-6">
                     <BackButton onClick={() => setActiveView("dashboard")} />
@@ -825,7 +866,6 @@ function AppShell({
                   <div className="space-y-6">
                     <BackButton onClick={() => setActiveView("dashboard")} />
                     <Card>
-                  <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">Organization Settings</CardTitle>
                       <CardDescription>Manage school organization details</CardDescription>
@@ -847,7 +887,7 @@ function AppShell({
       {/* Mobile Bottom Navigation - Visible only on mobile */}
       <nav className="lg:hidden fixed bottom-0 left-0 right-0 border-t border-border bg-card px-0">
         <div className="flex items-center justify-around h-16 overflow-x-auto">
-          {sidebarGroups.flatMap((group) => group.items).slice(0, 5).map((item) => (
+          {navItems.map((item) => (
             <button
               key={item.id}
               onClick={() => setActiveView(item.id)}
