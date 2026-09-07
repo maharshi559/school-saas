@@ -2294,9 +2294,9 @@ function MembersView({ membership }: { membership: any }) {
   const [tab, setTab] = useState<"pending" | "invite">("pending");
   const [pendingMembers, setPendingMembers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
-  const [invitePhone, setInvitePhone] = useState("");
-  const [inviteError, setInviteError] = useState<string>();
-  const [inviteLink, setInviteLink] = useState<string>();
+  const [formData, setFormData] = useState({ name: "", phone: "", role: "TEACHER" });
+  const [invites, setInvites] = useState<any[]>([]);
+  const [formError, setFormError] = useState<string>();
   const [selectedRole, setSelectedRole] = useState<string>("TEACHER");
   const [approvingId, setApprovingId] = useState<string | null>(null);
 
@@ -2321,23 +2321,58 @@ function MembersView({ membership }: { membership: any }) {
     };
   }, [membership?.tenantId]);
 
-  const handleCreateInvite = async () => {
-    if (!invitePhone) {
-      setInviteError("Please enter a phone number");
+  const handleAddInvite = () => {
+    if (!formData.phone || !formData.name) {
+      setFormError("Please fill in all fields");
       return;
     }
-    setInviteError(undefined);
+    setFormError(undefined);
 
+    // Add to local list
+    setInvites([
+      ...invites,
+      {
+        id: Math.random().toString(),
+        phone: formData.phone,
+        name: formData.name,
+        role: formData.role,
+        link: null,
+        status: "pending",
+      },
+    ]);
+
+    setFormData({ name: "", phone: "", role: "TEACHER" });
+  };
+
+  const handleRemoveInvite = (id: string) => {
+    setInvites(invites.filter((inv) => inv.id !== id));
+  };
+
+  const handleGenerateLinks = async () => {
     try {
-      const res = await apiFetch<any>("/invites", {
-        tenantId: membership.tenantId,
-        method: "POST",
-        body: JSON.stringify({ phone: invitePhone }),
-      });
-      setInviteLink(res.inviteLink);
-      setInvitePhone("");
+      const updatedInvites = await Promise.all(
+        invites
+          .filter((inv) => !inv.link)
+          .map(async (inv) => {
+            try {
+              const res = await apiFetch<any>("/invites", {
+                tenantId: membership.tenantId,
+                method: "POST",
+                body: JSON.stringify({ phone: inv.phone }),
+              });
+              return { ...inv, link: res.inviteLink, status: "sent" };
+            } catch (e) {
+              return { ...inv, status: "error", error: e instanceof Error ? e.message : "Failed" };
+            }
+          })
+      );
+
+      setInvites([
+        ...invites.filter((inv) => inv.link),
+        ...updatedInvites,
+      ]);
     } catch (e) {
-      setInviteError(e instanceof Error ? e.message : "Failed to create invite");
+      setFormError(e instanceof Error ? e.message : "Failed to generate links");
     }
   };
 
@@ -2373,7 +2408,7 @@ function MembersView({ membership }: { membership: any }) {
               tab === t ? "border-accent text-accent" : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t === "pending" ? "Pending Approval" : "Send Invites"}
+            {t === "pending" ? `Pending Approval (${pendingMembers.length})` : `Send Invites (${invites.length})`}
           </button>
         ))}
       </div>
@@ -2391,35 +2426,49 @@ function MembersView({ membership }: { membership: any }) {
                 <p className="text-sm text-muted-foreground">Loading...</p>
               </div>
             ) : pendingMembers.length > 0 ? (
-              <div className="space-y-3">
-                {pendingMembers.map((member) => (
-                  <div key={member.id} className="border border-border rounded-lg p-4 flex items-start justify-between">
-                    <div className="flex-1">
-                      <p className="font-medium text-foreground">{member.displayName || member.phone}</p>
-                      <p className="text-xs text-muted-foreground">{member.phone}</p>
-                      <p className="text-xs text-muted-foreground mt-1">Joined: {new Date(member.joinedAt).toLocaleDateString()}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <select
-                        value={selectedRole}
-                        onChange={(e) => setSelectedRole(e.target.value)}
-                        className="h-9 px-2 border border-input rounded-md text-xs bg-background text-foreground"
-                      >
-                        <option value="TEACHER">Teacher</option>
-                        <option value="PARENT">Parent</option>
-                        <option value="STAFF">Staff</option>
-                        <option value="PRINCIPAL">Principal</option>
-                      </select>
-                      <Button
-                        size="sm"
-                        onClick={() => handleApprove(member.id)}
-                        disabled={approvingId === member.id}
-                      >
-                        {approvingId === member.id ? "Approving..." : "Approve"}
-                      </Button>
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/30">
+                      <th className="px-4 py-3 text-left font-semibold">Name</th>
+                      <th className="px-4 py-3 text-left font-semibold">Phone</th>
+                      <th className="px-4 py-3 text-left font-semibold">Joined</th>
+                      <th className="px-4 py-3 text-left font-semibold">Role</th>
+                      <th className="px-4 py-3 text-center font-semibold">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pendingMembers.map((member) => (
+                      <tr key={member.id} className="border-b border-border hover:bg-muted/30">
+                        <td className="px-4 py-3 font-medium">{member.displayName || "—"}</td>
+                        <td className="px-4 py-3 font-mono text-xs">{member.phone}</td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">{new Date(member.joinedAt).toLocaleDateString()}</td>
+                        <td className="px-4 py-3">
+                          <select
+                            value={selectedRole}
+                            onChange={(e) => setSelectedRole(e.target.value)}
+                            className="h-8 px-2 border border-input rounded-md text-xs bg-background text-foreground"
+                          >
+                            <option value="TEACHER">Teacher</option>
+                            <option value="PARENT">Parent</option>
+                            <option value="STAFF">Staff</option>
+                            <option value="PRINCIPAL">Principal</option>
+                          </select>
+                        </td>
+                        <td className="px-4 py-3 text-center">
+                          <Button
+                            size="sm"
+                            onClick={() => handleApprove(member.id)}
+                            disabled={approvingId === member.id}
+                            className="h-8"
+                          >
+                            {approvingId === member.id ? "…" : "Approve"}
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             ) : (
               <p className="text-center text-sm text-muted-foreground py-8">No pending approvals</p>
@@ -2429,42 +2478,108 @@ function MembersView({ membership }: { membership: any }) {
       )}
 
       {tab === "invite" && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Send Invitation</CardTitle>
-            <CardDescription>Create and share an invite link with new members</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            {!inviteLink ? (
-              <>
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Add Members</CardTitle>
+              <CardDescription>Enter details and generate invite links</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
-                  <Label htmlFor="phone">Phone Number (E.164 format)</Label>
+                  <Label htmlFor="name">Full Name</Label>
                   <Input
-                    id="phone"
-                    placeholder="+1 (555) 123-4001"
-                    value={invitePhone}
-                    onChange={(e) => setInvitePhone(e.target.value)}
+                    id="name"
+                    placeholder="e.g., John Doe"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   />
                 </div>
-                {inviteError && <Alert variant="destructive"><AlertDescription>{inviteError}</AlertDescription></Alert>}
-                <Button onClick={handleCreateInvite} className="w-full">Generate Invite Link</Button>
-              </>
-            ) : (
-              <>
-                <Alert variant="default">
-                  <AlertDescription>Invite link created! Share this link with the new member.</AlertDescription>
-                </Alert>
-                <div className="bg-muted p-3 rounded-md font-mono text-xs break-all cursor-pointer hover:bg-muted/80" onClick={() => {
-                  navigator.clipboard.writeText(inviteLink);
-                  alert("Link copied to clipboard!");
-                }}>
-                  {inviteLink}
+                <div>
+                  <Label htmlFor="phone">Phone (E.164)</Label>
+                  <Input
+                    id="phone"
+                    placeholder="+919876543210"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  />
                 </div>
-                <Button variant="outline" onClick={() => setInviteLink(undefined)} className="w-full">Create Another Invite</Button>
-              </>
-            )}
-          </CardContent>
-        </Card>
+                <div>
+                  <Label htmlFor="role">Role</Label>
+                  <select
+                    id="role"
+                    value={formData.role}
+                    onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                    className="w-full h-10 px-3 border border-input rounded-md text-sm bg-background text-foreground"
+                  >
+                    <option value="TEACHER">Teacher</option>
+                    <option value="PARENT">Parent</option>
+                    <option value="STAFF">Staff</option>
+                    <option value="PRINCIPAL">Principal</option>
+                  </select>
+                </div>
+              </div>
+              {formError && <Alert variant="destructive"><AlertDescription>{formError}</AlertDescription></Alert>}
+              <Button onClick={handleAddInvite} className="w-full">+ Add to List</Button>
+            </CardContent>
+          </Card>
+
+          {invites.length > 0 && (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg">Pending Invites ({invites.length})</CardTitle>
+                    <CardDescription>Generate and share links with these members</CardDescription>
+                  </div>
+                  {invites.some((inv) => !inv.link) && (
+                    <Button onClick={handleGenerateLinks} className="ml-4">
+                      Generate All Links
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {invites.map((invite) => (
+                    <div key={invite.id} className="border border-border rounded-lg p-4">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <p className="font-medium text-foreground">{invite.name}</p>
+                          <p className="text-xs text-muted-foreground">{invite.phone} • {invite.role}</p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleRemoveInvite(invite.id)}
+                          className="h-6 w-6 p-0"
+                        >
+                          ✕
+                        </Button>
+                      </div>
+                      {invite.link ? (
+                        <div
+                          className="bg-muted p-2 rounded text-xs font-mono break-all cursor-pointer hover:bg-muted/80"
+                          onClick={() => {
+                            navigator.clipboard.writeText(invite.link);
+                            alert("Link copied!");
+                          }}
+                          title="Click to copy"
+                        >
+                          {invite.link}
+                        </div>
+                      ) : invite.status === "error" ? (
+                        <p className="text-xs text-destructive">Error: {invite.error}</p>
+                      ) : (
+                        <p className="text-xs text-muted-foreground">Click "Generate All Links" to create invite</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
       )}
     </div>
   );
