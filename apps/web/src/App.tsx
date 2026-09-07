@@ -1255,19 +1255,45 @@ function TeachersView({ membership }: { membership: any }) {
 
 function ClassesView({ membership }: { membership: any }) {
   const [sections, setSections] = useState<any[]>([]);
+  const [levels, setLevels] = useState<any[]>([]);
+  const [years, setYears] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [formStep, setFormStep] = useState<"level" | "year" | "section">("level");
+
+  // Form state
+  const [levelName, setLevelName] = useState("");
+  const [levelAbbr, setLevelAbbr] = useState("");
+  const [yearValue, setYearValue] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [sectionName, setSectionName] = useState("");
+  const [selectedLevelId, setSelectedLevelId] = useState("");
+  const [selectedYearId, setSelectedYearId] = useState("");
 
   useEffect(() => {
     if (!membership) return;
-
     let mounted = true;
     setLoading(true);
-    apiFetch<{ items: any[] }>("/class-sections", { tenantId: membership.tenantId })
-      .then((r) => {
-        if (mounted) setSections(r.items);
+
+    Promise.all([
+      apiFetch<{ items: any[] }>("/class-sections", { tenantId: membership.tenantId }),
+      apiFetch<{ items: any[] }>("/class-levels", { tenantId: membership.tenantId }),
+      apiFetch<{ items: any[] }>("/academic-years", { tenantId: membership.tenantId }),
+    ])
+      .then(([sectionsRes, levelsRes, yearsRes]) => {
+        if (mounted) {
+          setSections(sectionsRes.items);
+          setLevels(levelsRes.items);
+          setYears(yearsRes.items);
+        }
       })
       .catch(() => {
-        if (mounted) setSections([]);
+        if (mounted) {
+          setSections([]);
+          setLevels([]);
+          setYears([]);
+        }
       })
       .finally(() => {
         if (mounted) setLoading(false);
@@ -1278,6 +1304,60 @@ function ClassesView({ membership }: { membership: any }) {
     };
   }, [membership?.tenantId]);
 
+  const handleCreateLevel = async () => {
+    if (!levelName || !levelAbbr) return;
+    try {
+      const res = await apiFetch<any>("/class-levels", {
+        tenantId: membership.tenantId,
+        method: "POST",
+        body: JSON.stringify({ name: levelName, abbreviation: levelAbbr, order: levels.length }),
+      });
+      setLevels([...levels, res]);
+      setLevelName("");
+      setLevelAbbr("");
+      setFormStep("year");
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleCreateYear = async () => {
+    if (!yearValue || !startDate || !endDate) return;
+    try {
+      const res = await apiFetch<any>("/academic-years", {
+        tenantId: membership.tenantId,
+        method: "POST",
+        body: JSON.stringify({ year: yearValue, startDate: new Date(startDate).toISOString(), endDate: new Date(endDate).toISOString() }),
+      });
+      setYears([...years, res]);
+      setYearValue("");
+      setStartDate("");
+      setEndDate("");
+      setFormStep("section");
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleCreateSection = async () => {
+    if (!sectionName || !selectedLevelId || !selectedYearId) return;
+    try {
+      const res = await apiFetch<any>("/class-sections", {
+        tenantId: membership.tenantId,
+        method: "POST",
+        body: JSON.stringify({ classLevelId: selectedLevelId, academicYearId: selectedYearId, name: sectionName }),
+      });
+      setSections([...sections, res]);
+      setSectionName("");
+      setSelectedLevelId("");
+      setSelectedYearId("");
+      setShowForm(false);
+      setFormStep("level");
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -1285,11 +1365,80 @@ function ClassesView({ membership }: { membership: any }) {
           <h2 className="text-2xl font-semibold text-foreground">Classes & Sections</h2>
           <p className="mt-1 text-sm text-muted-foreground">Create and manage class hierarchy</p>
         </div>
-        <Button className="flex items-center gap-2">
+        <Button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2">
           <PlusIcon />
-          Add Class
+          {showForm ? "Cancel" : "Add Class"}
         </Button>
       </div>
+
+      {showForm && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">
+              {formStep === "level" ? "Create Class Level" : formStep === "year" ? "Create Academic Year" : "Create Section"}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {formStep === "level" && (
+              <>
+                <div>
+                  <Label htmlFor="levelName">Class Name</Label>
+                  <Input id="levelName" placeholder="e.g., Grade 9" value={levelName} onChange={(e) => setLevelName(e.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="levelAbbr">Abbreviation</Label>
+                  <Input id="levelAbbr" placeholder="e.g., IX" value={levelAbbr} onChange={(e) => setLevelAbbr(e.target.value)} />
+                </div>
+                <Button onClick={handleCreateLevel} className="w-full">Create Level</Button>
+              </>
+            )}
+            {formStep === "year" && (
+              <>
+                <div>
+                  <Label htmlFor="yearValue">Academic Year</Label>
+                  <Input id="yearValue" placeholder="e.g., 2024-25" value={yearValue} onChange={(e) => setYearValue(e.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="startDate">Start Date</Label>
+                  <Input id="startDate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                </div>
+                <div>
+                  <Label htmlFor="endDate">End Date</Label>
+                  <Input id="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                </div>
+                <Button onClick={handleCreateYear} className="w-full">Create Year</Button>
+              </>
+            )}
+            {formStep === "section" && (
+              <>
+                <div>
+                  <Label htmlFor="levelSelect">Class</Label>
+                  <select id="levelSelect" value={selectedLevelId} onChange={(e) => setSelectedLevelId(e.target.value)} className="w-full px-3 py-2 border border-input rounded-md text-sm">
+                    <option value="">Select a class</option>
+                    {levels.map((l) => (
+                      <option key={l.id} value={l.id}>{l.name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="yearSelect">Academic Year</Label>
+                  <select id="yearSelect" value={selectedYearId} onChange={(e) => setSelectedYearId(e.target.value)} className="w-full px-3 py-2 border border-input rounded-md text-sm">
+                    <option value="">Select a year</option>
+                    {years.map((y) => (
+                      <option key={y.id} value={y.id}>{y.year}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <Label htmlFor="sectionName">Section Name</Label>
+                  <Input id="sectionName" placeholder="e.g., Section A" value={sectionName} onChange={(e) => setSectionName(e.target.value)} />
+                </div>
+                <Button onClick={handleCreateSection} className="w-full">Create Section</Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {loading ? (
         <div className="text-center py-12">
@@ -1305,7 +1454,6 @@ function ClassesView({ membership }: { membership: any }) {
                   <th className="px-6 py-3 text-left font-semibold">Class</th>
                   <th className="px-6 py-3 text-left font-semibold">Section</th>
                   <th className="px-6 py-3 text-left font-semibold">Year</th>
-                  <th className="px-6 py-3 text-center font-semibold">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -1314,9 +1462,6 @@ function ClassesView({ membership }: { membership: any }) {
                     <td className="px-6 py-4 font-medium">{section.classLevel?.name}</td>
                     <td className="px-6 py-4">{section.name}</td>
                     <td className="px-6 py-4 text-sm text-muted-foreground">{section.academicYear?.year}</td>
-                    <td className="px-6 py-4 text-center">
-                      <Button size="sm" variant="ghost" className="text-xs">Edit</Button>
-                    </td>
                   </tr>
                 ))}
               </tbody>
