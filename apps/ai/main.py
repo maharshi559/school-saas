@@ -317,3 +317,67 @@ def draft_message(req: CommDraftRequest):
         f"Write only the message text. No subject line. No commentary."
     )
     return {"message": message}
+
+
+# ── 5. Communication suggestions from upcoming events ─────────────────────────
+
+class EventItem(BaseModel):
+    title: str
+    eventType: str
+    startDate: str
+    endDate: str
+    description: Optional[str] = None
+
+
+class CommSuggestRequest(BaseModel):
+    tenantId: str
+    events: list[EventItem]
+    channel: str = Field(default="WHATSAPP", pattern="^(WHATSAPP|SMS|EMAIL)$")
+
+
+@app.post("/ai/communication/suggest", dependencies=[Depends(require_service_key)])
+def suggest_communications(req: CommSuggestRequest):
+    if not req.events:
+        return {"suggestions": []}
+
+    with get_db() as conn:
+        cur = conn.cursor()
+        cur.execute('SELECT name FROM "Tenant" WHERE id = %s', (req.tenantId,))
+        tenant = cur.fetchone()
+        school_name = tenant["name"] if tenant else "the school"
+
+    guidance = {
+        "WHATSAPP": "conversational, polite, 160-200 chars",
+        "SMS": "under 140 chars, plain text only",
+        "EMAIL": "professional, 3-4 sentences with salutation",
+    }
+
+    event_list = "\n".join(
+        f"- {e.title} ({e.eventType}): {e.startDate} to {e.endDate}"
+        + (f" — {e.description}" if e.description else "")
+        for e in req.events
+    )
+
+    raw = ask(
+        f"You are helping {school_name} plan parent communications for upcoming events.\n"
+        f"Channel: {req.channel} ({guidance[req.channel]})\n\n"
+        f"Upcoming events:\n{event_list}\n\n"
+        f"For each event that warrants a parent notification (skip internal-only meetings), "
+        f"write a ready-to-send message. Format your response as a JSON array:\n"
+        f'[{{"eventTitle":"...","recipientRole":"PARENT","message":"...","priority":"HIGH|MEDIUM|LOW"}}]\n'
+        f"Return only the JSON array, no markdown, no commentary.",
+        max_tokens=1024,
+    )
+
+    # Parse the JSON the model returned; fall back to empty list on bad output
+    import json, re as _re
+    try:
+        # Strip any accidental markdown fences
+        clean = _re.sub(r"```[a-z]*\n?", "", raw).strip()
+        suggestions = json.loads(clean)
+        if not isinstance(suggestions, list):
+            suggestions = []
+    except Exception:
+        suggestions = []
+
+    return {"suggestions": suggestions}

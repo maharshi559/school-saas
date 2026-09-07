@@ -146,6 +146,24 @@ enum InviteStatus {
   REVOKED
 }
 
+enum EventType {
+  HOLIDAY
+  EXAM
+  EVENT
+  CLOSURE
+  MEETING
+  OTHER
+}
+
+enum NotificationType {
+  ATTENDANCE_FLAG
+  FEE_OVERDUE
+  AI_SUGGESTION
+  EVENT_REMINDER
+  MESSAGE_SENT
+  SYSTEM
+}
+
 // ─────────────────────────  Global identity  ──────────────────────
 
 model User {
@@ -158,8 +176,10 @@ model User {
   memberships   Membership[]
   guardian      Guardian[]
   roles         UserRole[]
-  examScores    ExamScore[]
+  examScores         ExamScore[]
   featureFlagUpdates FeatureFlag[]
+  schoolEvents       SchoolEvent[]
+  notifications      Notification[]
 }
 
 model UserRole {
@@ -223,6 +243,8 @@ model Tenant {
   communicationLog  CommunicationLog[]
   whatsappConfig    WhatsAppConfig?
   featureFlags      FeatureFlag[]
+  schoolEvents      SchoolEvent[]
+  notifications     Notification[]
 }
 
 model Membership {
@@ -643,4 +665,48 @@ model FeatureFlag {
   @@unique([key, tenantId]) // one record per key per scope
   @@index([tenantId])
   @@index([key])
+}
+
+// ───────────────────────────  School Events  ───────────────────────────
+
+model SchoolEvent {
+  id              String    @id @default(cuid())
+  tenantId        String    @default("")
+  title           String
+  description     String?
+  eventType       EventType
+  startDate       DateTime  @db.Date
+  endDate         DateTime  @db.Date
+  isAllDay        Boolean   @default(true)
+  notifySent      Boolean   @default(false)
+  createdByUserId String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdBy User   @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, startDate])
+  @@index([tenantId, eventType])
+}
+
+// ───────────────────────────  Notifications  ──────────────────────────
+
+model Notification {
+  id        String           @id @default(cuid())
+  tenantId  String           @default("")
+  userId    String
+  type      NotificationType
+  title     String
+  body      String
+  data      String?          // JSON payload (eventId, studentId, etc.)
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, userId, createdAt])
+  @@index([tenantId, userId, readAt])
 }

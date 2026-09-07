@@ -1,7 +1,9 @@
 import type { FastifyInstance } from "fastify";
+import { prisma } from "@school/db";
 import { z } from "zod";
 
 import { config } from "../../config.js";
+import { createNotification } from "../notifications/routes.js";
 
 const AI_BASE = config.AI_SERVICE_URL;
 const SERVICE_KEY = config.AI_SERVICE_KEY;
@@ -98,6 +100,60 @@ export async function aiProxyRoutes(app: FastifyInstance) {
         channel,
         recipientRole,
       });
+      return reply.send(data);
+    }
+  );
+
+  // ── AI communication suggestions based on upcoming events ──────────────────
+  // GET /ai/communication/suggestions?days=30
+  // Queries upcoming school events, sends to AI, gets back ready-to-use drafts.
+  // Also pushes an in-app notification to the requesting admin.
+  app.get(
+    "/ai/communication/suggestions",
+    { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN", "PRINCIPAL"])] },
+    async (request, reply) => {
+      const { days = "30", channel = "WHATSAPP" } = request.query as Record<string, string>;
+      const tenantId = request.tenant!.id;
+
+      const until = new Date();
+      until.setDate(until.getDate() + parseInt(days));
+
+      const events = await (prisma as any).schoolEvent.findMany({
+        where: {
+          tenantId,
+          deletedAt: null,
+          startDate: { gte: new Date(), lte: until },
+        },
+        orderBy: { startDate: "asc" },
+        take: 20,
+      });
+
+      if (events.length === 0) {
+        return reply.send({ suggestions: [], message: "No upcoming events in the next " + days + " days." });
+      }
+
+      const data = await callAI("/ai/communication/suggest", {
+        tenantId,
+        events: events.map((e: any) => ({
+          title: e.title,
+          eventType: e.eventType,
+          startDate: e.startDate,
+          endDate: e.endDate,
+          description: e.description,
+        })),
+        channel,
+      }) as { suggestions: any[] };
+
+      // Push a notification to the requesting admin so they see it in the bell
+      await createNotification({
+        tenantId,
+        userId: request.currentUser!.id,
+        type: "AI_SUGGESTION",
+        title: "AI communication suggestions ready",
+        body: `${data.suggestions?.length ?? 0} notification draft(s) suggested based on upcoming events.`,
+        data: { suggestionCount: data.suggestions?.length ?? 0 },
+      });
+
       return reply.send(data);
     }
   );
