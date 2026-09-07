@@ -1866,7 +1866,7 @@ function CommunicationView({ membership }: { membership: any }) {
                   id="recipient"
                   value={recipientRole}
                   onChange={(e) => setRecipientRole(e.target.value)}
-                  className="w-full px-3 py-2 border border-input rounded-md text-sm"
+                  className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground"
                 >
                   <option value="PARENT">Parents</option>
                   <option value="TEACHER">Teachers</option>
@@ -1881,7 +1881,7 @@ function CommunicationView({ membership }: { membership: any }) {
                   id="channel"
                   value={channel}
                   onChange={(e) => setChannel(e.target.value)}
-                  className="w-full px-3 py-2 border border-input rounded-md text-sm"
+                  className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground"
                 >
                   <option value="WHATSAPP">WhatsApp</option>
                   <option value="SMS">SMS</option>
@@ -1933,7 +1933,7 @@ function CommunicationView({ membership }: { membership: any }) {
                     id="type"
                     value={templateType}
                     onChange={(e) => setTemplateType(e.target.value)}
-                    className="w-full px-3 py-2 border border-input rounded-md text-sm"
+                    className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground"
                   >
                     <option value="UPDATE">Update</option>
                     <option value="HOLIDAY">Holiday</option>
@@ -1949,7 +1949,7 @@ function CommunicationView({ membership }: { membership: any }) {
                     id="tplChannel"
                     value={templateChannel}
                     onChange={(e) => setTemplateChannel(e.target.value)}
-                    className="w-full px-3 py-2 border border-input rounded-md text-sm"
+                    className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground"
                   >
                     <option value="WHATSAPP">WhatsApp</option>
                     <option value="SMS">SMS</option>
