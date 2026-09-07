@@ -20,7 +20,7 @@ type Student = {
   enrollmentStatus?: string;
   classSection?: { id: string; name: string };
 };
-type SidebarView = "dashboard" | "students" | "teachers" | "classes" | "attendance" | "finance" | "consent" | "settings";
+type SidebarView = "dashboard" | "students" | "teachers" | "classes" | "attendance" | "finance" | "consent" | "communication" | "settings";
 
 const SunIcon = () => (
   <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,6 +108,12 @@ const WalletIcon = () => (
   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <rect x="1" y="4" width="22" height="16" rx="2" ry="2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M1 10h22" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const MessageIcon = () => (
+  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -308,7 +314,7 @@ function AppShell({
   const [tenantId, setTenantId] = useState(active[0]?.tenantId ?? "");
   const [activeView, setActiveViewState] = useState<SidebarView>(() => {
     const hash = window.location.hash.slice(1);
-    const validViews = ["dashboard", "students", "teachers", "classes", "attendance", "finance", "consent", "settings"];
+    const validViews = ["dashboard", "students", "teachers", "classes", "attendance", "finance", "consent", "communication", "settings"];
     return (hash && validViews.includes(hash) ? hash : "dashboard") as SidebarView;
   });
 
@@ -330,7 +336,7 @@ function AppShell({
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.slice(1);
-      const validViews = ["dashboard", "students", "teachers", "classes", "attendance", "finance", "consent", "settings"];
+      const validViews = ["dashboard", "students", "teachers", "classes", "attendance", "finance", "consent", "communication", "settings"];
       if (hash && validViews.includes(hash)) {
         setActiveViewState(hash as SidebarView);
       }
@@ -369,6 +375,7 @@ function AppShell({
     { id: "attendance", label: "Attendance", icon: <CheckSquareIcon /> },
     { id: "finance", label: "Finance", icon: <WalletIcon /> },
     { id: "consent", label: "Consent", icon: <ShieldIcon /> },
+    { id: "communication", label: "Communication", icon: <MessageIcon /> },
     { id: "settings", label: "Org Settings", icon: <SettingsIcon /> },
   ];
 
@@ -499,6 +506,7 @@ function AppShell({
                     </CardContent>
                   </Card>
                 )}
+                {activeView === "communication" && <CommunicationView membership={membership} />}
                 {activeView === "settings" && (
                   <Card>
                     <CardHeader>
@@ -1473,6 +1481,318 @@ function ClassesView({ membership }: { membership: any }) {
           <CardContent className="py-12 text-center">
             <BookIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground opacity-50" />
             <p className="text-sm text-muted-foreground">No classes yet</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function CommunicationView({ membership }: { membership: any }) {
+  const [tab, setTab] = useState<"templates" | "send" | "history">("send");
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Form state for sending messages
+  const [templateId, setTemplateId] = useState("");
+  const [customMessage, setCustomMessage] = useState("");
+  const [recipientRole, setRecipientRole] = useState("PARENT");
+  const [channel, setChannel] = useState("WHATSAPP");
+  const [scheduleDate, setScheduleDate] = useState("");
+
+  // Form state for creating templates
+  const [templateName, setTemplateName] = useState("");
+  const [templateType, setTemplateType] = useState("UPDATE");
+  const [templateContent, setTemplateContent] = useState("");
+  const [templateChannel, setTemplateChannel] = useState("WHATSAPP");
+
+  useEffect(() => {
+    if (!membership) return;
+    let mounted = true;
+
+    Promise.all([
+      apiFetch<{ items: any[] }>("/communication/templates", { tenantId: membership.tenantId }),
+      apiFetch<{ items: any[] }>("/communication/history", { tenantId: membership.tenantId }),
+    ])
+      .then(([templatesRes, historyRes]) => {
+        if (mounted) {
+          setTemplates(templatesRes.items);
+          setHistory(historyRes.items);
+        }
+      })
+      .catch(() => {
+        if (mounted) {
+          setTemplates([]);
+          setHistory([]);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [membership?.tenantId]);
+
+  const handleCreateTemplate = async () => {
+    if (!templateName || !templateContent) return;
+    try {
+      const res = await apiFetch<any>("/communication/templates", {
+        tenantId: membership.tenantId,
+        method: "POST",
+        body: JSON.stringify({
+          type: templateType,
+          channel: templateChannel,
+          content: templateContent,
+          name: templateName,
+          recipientRole: "ALL",
+        }),
+      });
+      setTemplates([...templates, res]);
+      setTemplateName("");
+      setTemplateContent("");
+      setTemplateType("UPDATE");
+      setTemplateChannel("WHATSAPP");
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!customMessage && !templateId) return;
+    try {
+      const res = await apiFetch<any>("/communication/send", {
+        tenantId: membership.tenantId,
+        method: "POST",
+        body: JSON.stringify({
+          templateId: templateId || undefined,
+          customContent: customMessage || undefined,
+          recipientRole,
+          channel,
+          scheduleFor: scheduleDate || undefined,
+        }),
+      });
+      setHistory([res, ...history]);
+      setCustomMessage("");
+      setTemplateId("");
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold text-foreground">Communication</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Send notifications and messages to parents, teachers, and students</p>
+      </div>
+
+      <div className="flex gap-2 border-b border-border">
+        {(["send", "templates", "history"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 ${
+              tab === t ? "border-accent text-accent" : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t === "send" ? "Send Message" : t === "templates" ? "Templates" : "History"}
+          </button>
+        ))}
+      </div>
+
+      {tab === "send" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Send Message</CardTitle>
+            <CardDescription>Send notifications to your school community</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="useTemplate">Use Template (Optional)</Label>
+              <select
+                id="useTemplate"
+                value={templateId}
+                onChange={(e) => setTemplateId(e.target.value)}
+                className="w-full px-3 py-2 border border-input rounded-md text-sm"
+              >
+                <option value="">Custom Message</option>
+                {templates.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+
+            {!templateId && (
+              <div>
+                <Label htmlFor="message">Message</Label>
+                <textarea
+                  id="message"
+                  placeholder="Type your message here..."
+                  value={customMessage}
+                  onChange={(e) => setCustomMessage(e.target.value)}
+                  className="w-full px-3 py-2 border border-input rounded-md text-sm h-24"
+                />
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="recipient">Send To</Label>
+                <select
+                  id="recipient"
+                  value={recipientRole}
+                  onChange={(e) => setRecipientRole(e.target.value)}
+                  className="w-full px-3 py-2 border border-input rounded-md text-sm"
+                >
+                  <option value="PARENT">Parents</option>
+                  <option value="TEACHER">Teachers</option>
+                  <option value="STUDENT">Students</option>
+                  <option value="ALL">All</option>
+                </select>
+              </div>
+
+              <div>
+                <Label htmlFor="channel">Channel</Label>
+                <select
+                  id="channel"
+                  value={channel}
+                  onChange={(e) => setChannel(e.target.value)}
+                  className="w-full px-3 py-2 border border-input rounded-md text-sm"
+                >
+                  <option value="WHATSAPP">WhatsApp</option>
+                  <option value="SMS">SMS</option>
+                  <option value="EMAIL">Email</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <Label htmlFor="schedule">Schedule (Optional)</Label>
+              <Input
+                id="schedule"
+                type="datetime-local"
+                value={scheduleDate}
+                onChange={(e) => setScheduleDate(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground mt-1">Leave empty to send immediately</p>
+            </div>
+
+            <Button onClick={handleSendMessage} className="w-full">
+              {scheduleDate ? "Schedule Message" : "Send Now"}
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === "templates" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Message Templates</CardTitle>
+            <CardDescription>Create reusable message templates</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-4 border-b border-border pb-4 mb-4">
+              <div>
+                <Label htmlFor="templateName">Template Name</Label>
+                <Input
+                  id="templateName"
+                  placeholder="e.g., Holiday Announcement"
+                  value={templateName}
+                  onChange={(e) => setTemplateName(e.target.value)}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="type">Type</Label>
+                  <select
+                    id="type"
+                    value={templateType}
+                    onChange={(e) => setTemplateType(e.target.value)}
+                    className="w-full px-3 py-2 border border-input rounded-md text-sm"
+                  >
+                    <option value="UPDATE">Update</option>
+                    <option value="HOLIDAY">Holiday</option>
+                    <option value="CLOSURE">Closure</option>
+                    <option value="ANNOUNCEMENT">Announcement</option>
+                    <option value="EMERGENCY">Emergency</option>
+                  </select>
+                </div>
+
+                <div>
+                  <Label htmlFor="tplChannel">Channel</Label>
+                  <select
+                    id="tplChannel"
+                    value={templateChannel}
+                    onChange={(e) => setTemplateChannel(e.target.value)}
+                    className="w-full px-3 py-2 border border-input rounded-md text-sm"
+                  >
+                    <option value="WHATSAPP">WhatsApp</option>
+                    <option value="SMS">SMS</option>
+                    <option value="EMAIL">Email</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="templateContent">Template Content</Label>
+                <textarea
+                  id="templateContent"
+                  placeholder="Use {{variable}} for placeholders (e.g., {{schoolName}}, {{date}})"
+                  value={templateContent}
+                  onChange={(e) => setTemplateContent(e.target.value)}
+                  className="w-full px-3 py-2 border border-input rounded-md text-sm h-20"
+                />
+              </div>
+
+              <Button onClick={handleCreateTemplate} className="w-full">Create Template</Button>
+            </div>
+
+            <div className="space-y-2">
+              <h3 className="font-medium text-sm">Existing Templates</h3>
+              {templates.map((t) => (
+                <div key={t.id} className="p-3 border border-border rounded-md text-sm">
+                  <p className="font-medium">{t.name}</p>
+                  <p className="text-xs text-muted-foreground mt-1">{t.type} · {t.channel}</p>
+                  <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{t.content}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === "history" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Message History</CardTitle>
+            <CardDescription>View all sent and scheduled messages</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {history.length > 0 ? (
+                history.map((msg) => (
+                  <div key={msg.id} className="p-3 border border-border rounded-md text-sm">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-medium">{msg.status}</p>
+                        <p className="text-xs text-muted-foreground">{msg.recipientRole} · {msg.channel}</p>
+                      </div>
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        msg.status === "SENT" ? "bg-green-100 text-green-800" :
+                        msg.status === "SCHEDULED" ? "bg-blue-100 text-blue-800" :
+                        "bg-gray-100 text-gray-800"
+                      }`}>
+                        {msg.status}
+                      </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">Recipients: {msg.recipientCount}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-8">No messages yet</p>
+              )}
+            </div>
           </CardContent>
         </Card>
       )}
