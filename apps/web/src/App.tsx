@@ -598,7 +598,7 @@ function AppShell({
   return (
     <div className="flex h-screen flex-col bg-background">
       {/* Header */}
-      <header className="border-b border-border bg-card px-6 py-4">
+      <header className="bg-background px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-accent text-accent-foreground font-semibold">
@@ -698,7 +698,7 @@ function AppShell({
       {/* Main content with sidebar (desktop) and bottom nav (mobile) */}
       <div className="flex flex-1 overflow-hidden">
         {/* Desktop Sidebar - Hidden on mobile */}
-        <aside className="hidden lg:flex lg:w-64 border-r border-border bg-card overflow-y-auto">
+        <aside className="hidden lg:flex lg:w-64 bg-background overflow-y-auto">
           <nav className="w-full space-y-6 p-4">
             {sidebarGroups.map((group) => (
               <div key={group.group}>
@@ -885,7 +885,7 @@ function AppShell({
       </div>
 
       {/* Mobile Bottom Navigation - Visible only on mobile */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 border-t border-border bg-card px-0">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-background px-0">
         <div className="flex items-center justify-around h-16 overflow-x-auto">
           {navItems.map((item) => (
             <button
