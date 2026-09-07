@@ -139,6 +139,13 @@ enum RecipientRole {
   ALL
 }
 
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
 // ─────────────────────────  Global identity  ──────────────────────
 
 model User {
@@ -194,6 +201,7 @@ model Tenant {
   deletedAt  DateTime?
 
   memberships    Membership[]
+  userInvites    UserInvite[]
   academicYears  AcademicYear[]
   classLevels    ClassLevel[]
   classSections  ClassSection[]
@@ -228,6 +236,24 @@ model Membership {
 
   @@unique([tenantId, userId, role])
   @@index([tenantId, status])
+}
+
+model UserInvite {
+  id          String       @id @default(cuid())
+  tenantId    String
+  token       String       @unique
+  phone       String
+  status      InviteStatus @default(PENDING)
+  createdBy   String       // userId of who created this invite
+  acceptedAt  DateTime?
+  expiresAt   DateTime
+  createdAt   DateTime     @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, phone])
+  @@index([tenantId, status])
+  @@index([token])
 }
 
 // ─────────────────────────  Academic structure  ───────────────────

@@ -11,6 +11,7 @@ import { attendanceRoutes } from "./modules/attendance/routes.js";
 import { financeRoutes } from "./modules/finance/routes.js";
 import { communicationRoutes } from "./modules/communication/routes.js";
 import { schoolRoutes } from "./modules/school/routes.js";
+import { userRoutes } from "./modules/users/routes.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -35,6 +36,7 @@ export async function buildApp() {
       await api.register(financeRoutes);
       await api.register(communicationRoutes);
       await api.register(schoolRoutes);
+      await api.register(userRoutes);
     },
     { prefix: "/api/v1" },
   );
