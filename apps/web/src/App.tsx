@@ -7,6 +7,7 @@ import { Input } from "./components/ui/input.js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card.js";
 import { Label } from "./components/ui/label.js";
 import { Alert, AlertDescription } from "./components/ui/alert.js";
+import { Avatar } from "./components/ui/avatar.js";
 import { ToastContainer, type Toast } from "./components/Toast.js";
 
 type Student = {
@@ -306,18 +307,14 @@ function AppShell({
   const active = user.memberships.filter((m) => m.status === "ACTIVE");
   const [tenantId, setTenantId] = useState(active[0]?.tenantId ?? "");
   const [activeView, setActiveViewState] = useState<SidebarView>(() => {
-    try {
-      const saved = localStorage.getItem("adminViewActive");
-      return (saved && ["dashboard", "students", "teachers", "classes", "attendance", "finance", "consent", "settings"].includes(saved)
-        ? saved
-        : "dashboard") as SidebarView;
-    } catch {
-      return "dashboard";
-    }
+    const hash = window.location.hash.slice(1);
+    const validViews = ["dashboard", "students", "teachers", "classes", "attendance", "finance", "consent", "settings"];
+    return (hash && validViews.includes(hash) ? hash : "dashboard") as SidebarView;
   });
 
   const setActiveView = (view: SidebarView) => {
     setActiveViewState(view);
+    window.location.hash = view;
     try {
       localStorage.setItem("adminViewActive", view);
     } catch {
@@ -329,6 +326,19 @@ function AppShell({
   const [showOrgSwitch, setShowOrgSwitch] = useState(false);
 
   const membership = active.find((m) => m.tenantId === tenantId);
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.slice(1);
+      const validViews = ["dashboard", "students", "teachers", "classes", "attendance", "finance", "consent", "settings"];
+      if (hash && validViews.includes(hash)) {
+        setActiveViewState(hash as SidebarView);
+      }
+    };
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
 
   useEffect(() => {
     // Only load students when on students view
@@ -403,7 +413,12 @@ function AppShell({
               )}
             </div>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <Avatar
+              initials={(user.displayName || user.phone).substring(0, 2).toUpperCase()}
+              name={user.displayName}
+              className="h-9 w-9"
+            />
             <div className="text-right">
               <p className="text-sm font-medium text-foreground">{user.displayName ?? user.phone}</p>
               <p className="text-xs text-muted-foreground">
