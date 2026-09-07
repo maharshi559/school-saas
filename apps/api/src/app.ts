@@ -12,6 +12,7 @@ import { financeRoutes } from "./modules/finance/routes.js";
 import { communicationRoutes } from "./modules/communication/routes.js";
 import { schoolRoutes } from "./modules/school/routes.js";
 import { userRoutes } from "./modules/users/routes.js";
+import { examScoresRoutes } from "./modules/examscores/routes.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -35,6 +36,7 @@ export async function buildApp() {
       await api.register(attendanceRoutes);
       await api.register(financeRoutes);
       await api.register(communicationRoutes);
+      await api.register(examScoresRoutes);
       await api.register(schoolRoutes);
       await api.register(userRoutes);
     },

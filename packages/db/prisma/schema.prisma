@@ -158,6 +158,7 @@ model User {
   memberships Membership[]
   guardian    Guardian[]
   roles       UserRole[]
+  examScores  ExamScore[]
 }
 
 model UserRole {
@@ -211,6 +212,7 @@ model Tenant {
   consentRecords ConsentRecord[]
   attendanceSessions AttendanceSession[]
   attendanceRecords  AttendanceRecord[]
+  examScores        ExamScore[]
   feeStructures     FeeStructure[]
   studentFees       StudentFee[]
   payments          Payment[]
@@ -323,6 +325,7 @@ model Student {
   consentRecords ConsentRecord[]
   attendanceRecords AttendanceRecord[]
   studentFees    StudentFee[]
+  examScores     ExamScore[]
 
   @@unique([tenantId, admissionNo])
   @@index([tenantId, classSectionId])
@@ -422,6 +425,33 @@ model AttendanceRecord {
   @@unique([tenantId, sessionId, studentId])
   @@unique([tenantId, clientRecordId])
   @@index([tenantId, studentId, markedAt])
+}
+
+// ──────────────────────────  Exam Scores  ──────────────────────────
+
+model ExamScore {
+  id          String   @id @default(cuid())
+  tenantId    String @default("")
+  studentId   String
+  subject     String   // Subject name (e.g., Mathematics, Science, English)
+  examName    String   // Name of the exam (e.g., Unit Test 1, Midterm, Final)
+  score       Decimal  @db.Decimal(5, 2)  // Points obtained
+  maxScore    Decimal  @db.Decimal(5, 2)  // Maximum possible score
+  percentage  Decimal  @db.Decimal(5, 2)  // Score percentage
+  remarks     String?  // Optional remarks or feedback from teacher
+  createdByUserId String // Teacher/Admin who created this record
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  deletedAt   DateTime? // Soft delete for audit trail
+
+  tenant  Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  student Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  createdBy User @relation(fields: [createdByUserId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, studentId])
+  @@index([tenantId, subject])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, examName])
 }
 
 // ──────────────────────────  Finance & Fees  ──────────────────────
