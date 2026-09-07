@@ -17,6 +17,8 @@ const schema = z.object({
   MSG91_AUTH_KEY: z.string().optional(),
   MSG91_SENDER_ID: z.string().optional(),
   MSG91_OTP_TEMPLATE_ID: z.string().optional(),
+  AI_SERVICE_URL: z.string().url().default("http://localhost:4001"),
+  AI_SERVICE_KEY: z.string().default(""),
 });
 
 const parsed = schema.safeParse(process.env);

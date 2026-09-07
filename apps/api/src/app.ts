@@ -14,6 +14,7 @@ import { schoolRoutes } from "./modules/school/routes.js";
 import { userRoutes } from "./modules/users/routes.js";
 import { examScoresRoutes } from "./modules/examscores/routes.js";
 import { featureFlagRoutes } from "./modules/admin/feature-flags.js";
+import { aiProxyRoutes } from "./modules/ai/routes.js";
 
 export async function buildApp() {
   const app = Fastify({
@@ -39,6 +40,7 @@ export async function buildApp() {
       await api.register(communicationRoutes);
       await api.register(examScoresRoutes);
       await api.register(featureFlagRoutes);
+      await api.register(aiProxyRoutes);
       await api.register(schoolRoutes);
       await api.register(userRoutes);
     },
