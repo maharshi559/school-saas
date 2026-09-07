@@ -7,7 +7,7 @@ export async function schoolRoutes(app: FastifyInstance) {
   // Get all class levels
   app.get(
     "/class-levels",
-    { preHandler: [app.authenticate] },
+    { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
       const levels = await request.prisma.classLevel.findMany({
         where: { tenantId: request.currentTenant.id },
@@ -20,7 +20,7 @@ export async function schoolRoutes(app: FastifyInstance) {
   // Create class level
   app.post(
     "/class-levels",
-    { preHandler: [app.authenticate] },
+    { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
       const { name, abbreviation, order } = z
         .object({
@@ -41,7 +41,7 @@ export async function schoolRoutes(app: FastifyInstance) {
   // Get all academic years
   app.get(
     "/academic-years",
-    { preHandler: [app.authenticate] },
+    { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
       const years = await request.prisma.academicYear.findMany({
         where: { tenantId: request.currentTenant.id },
@@ -54,7 +54,7 @@ export async function schoolRoutes(app: FastifyInstance) {
   // Create academic year
   app.post(
     "/academic-years",
-    { preHandler: [app.authenticate] },
+    { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
       const { year, startDate, endDate } = z
         .object({
@@ -80,7 +80,7 @@ export async function schoolRoutes(app: FastifyInstance) {
   // Create class section
   app.post(
     "/class-sections",
-    { preHandler: [app.authenticate] },
+    { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
       const { classLevelId, academicYearId, name } = z
         .object({
@@ -107,7 +107,7 @@ export async function schoolRoutes(app: FastifyInstance) {
   // Update class section
   app.patch(
     "/class-sections/:id",
-    { preHandler: [app.authenticate] },
+    { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
       const { id } = request.params as { id: string };
       const { name } = z.object({ name: z.string().min(1) }).parse(request.body);
@@ -127,7 +127,7 @@ export async function schoolRoutes(app: FastifyInstance) {
   // Get all teachers in school
   app.get(
     "/teachers",
-    { preHandler: [app.authenticate] },
+    { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
       const teachers = await request.prisma.user.findMany({
         where: {
@@ -163,7 +163,7 @@ export async function schoolRoutes(app: FastifyInstance) {
   // Assign teacher to class section
   app.post(
     "/class-sections/:sectionId/assign-teacher",
-    { preHandler: [app.authenticate] },
+    { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
       const { sectionId } = request.params as { sectionId: string };
       const { userId } = z.object({ userId: z.string() }).parse(request.body);
@@ -183,7 +183,7 @@ export async function schoolRoutes(app: FastifyInstance) {
   // Get students by class section
   app.get(
     "/class-sections/:sectionId/students",
-    { preHandler: [app.authenticate] },
+    { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
       const { sectionId } = request.params as { sectionId: string };
 
@@ -202,7 +202,7 @@ export async function schoolRoutes(app: FastifyInstance) {
   // Assign student to class section
   app.patch(
     "/students/:studentId/assign-section",
-    { preHandler: [app.authenticate] },
+    { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
       const { studentId } = request.params as { studentId: string };
       const { classSectionId } = z
