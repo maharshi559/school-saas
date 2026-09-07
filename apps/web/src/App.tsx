@@ -1162,7 +1162,7 @@ function TeachersView({ membership }: { membership: any }) {
     return () => {
       mounted = false;
     };
-  }, [membership]);
+  }, [membership?.tenantId]);
 
   return (
     <div className="space-y-6">
@@ -1242,7 +1242,7 @@ function ClassesView({ membership }: { membership: any }) {
     return () => {
       mounted = false;
     };
-  }, [membership]);
+  }, [membership?.tenantId]);
 
   return (
     <div className="space-y-6">
