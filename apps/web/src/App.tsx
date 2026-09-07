@@ -697,6 +697,7 @@ function AppShell({
                   </Card>
                 )}
                 {activeView === "communication" && <CommunicationView membership={membership} />}
+                {activeView === "members" && <MembersView membership={membership} />}
                 {activeView === "settings" && (
                   <Card>
                     <CardHeader>
@@ -2284,6 +2285,186 @@ function CommunicationView({ membership }: { membership: any }) {
             </CardContent>
           </Card>
         </div>
+      )}
+    </div>
+  );
+}
+
+function MembersView({ membership }: { membership: any }) {
+  const [tab, setTab] = useState<"pending" | "invite">("pending");
+  const [pendingMembers, setPendingMembers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [invitePhone, setInvitePhone] = useState("");
+  const [inviteError, setInviteError] = useState<string>();
+  const [inviteLink, setInviteLink] = useState<string>();
+  const [selectedRole, setSelectedRole] = useState<string>("TEACHER");
+  const [approvingId, setApprovingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!membership) return;
+    let mounted = true;
+    setLoading(true);
+
+    apiFetch<{ items: any[] }>("/pending-members", { tenantId: membership.tenantId })
+      .then((res) => {
+        if (mounted) setPendingMembers(res.items);
+      })
+      .catch(() => {
+        if (mounted) setPendingMembers([]);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [membership?.tenantId]);
+
+  const handleCreateInvite = async () => {
+    if (!invitePhone) {
+      setInviteError("Please enter a phone number");
+      return;
+    }
+    setInviteError(undefined);
+
+    try {
+      const res = await apiFetch<any>("/invites", {
+        tenantId: membership.tenantId,
+        method: "POST",
+        body: JSON.stringify({ phone: invitePhone }),
+      });
+      setInviteLink(res.inviteLink);
+      setInvitePhone("");
+    } catch (e) {
+      setInviteError(e instanceof Error ? e.message : "Failed to create invite");
+    }
+  };
+
+  const handleApprove = async (memberId: string) => {
+    setApprovingId(memberId);
+    try {
+      await apiFetch(`/members/${memberId}/approve`, {
+        tenantId: membership.tenantId,
+        method: "POST",
+        body: JSON.stringify({ role: selectedRole }),
+      });
+      setPendingMembers(pendingMembers.filter((m) => m.id !== memberId));
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Failed to approve member");
+    } finally {
+      setApprovingId(null);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-semibold text-foreground">Members</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Manage school members and invitations</p>
+      </div>
+
+      <div className="flex gap-2 border-b border-border">
+        {(["pending", "invite"] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-4 py-2 text-sm font-medium border-b-2 ${
+              tab === t ? "border-accent text-accent" : "border-transparent text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {t === "pending" ? "Pending Approval" : "Send Invites"}
+          </button>
+        ))}
+      </div>
+
+      {tab === "pending" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Pending Member Approvals</CardTitle>
+            <CardDescription>Users who have registered and are waiting for approval</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-border border-t-foreground mx-auto mb-2"></div>
+                <p className="text-sm text-muted-foreground">Loading...</p>
+              </div>
+            ) : pendingMembers.length > 0 ? (
+              <div className="space-y-3">
+                {pendingMembers.map((member) => (
+                  <div key={member.id} className="border border-border rounded-lg p-4 flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">{member.displayName || member.phone}</p>
+                      <p className="text-xs text-muted-foreground">{member.phone}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Joined: {new Date(member.joinedAt).toLocaleDateString()}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <select
+                        value={selectedRole}
+                        onChange={(e) => setSelectedRole(e.target.value)}
+                        className="h-9 px-2 border border-input rounded-md text-xs bg-background text-foreground"
+                      >
+                        <option value="TEACHER">Teacher</option>
+                        <option value="PARENT">Parent</option>
+                        <option value="STAFF">Staff</option>
+                        <option value="PRINCIPAL">Principal</option>
+                      </select>
+                      <Button
+                        size="sm"
+                        onClick={() => handleApprove(member.id)}
+                        disabled={approvingId === member.id}
+                      >
+                        {approvingId === member.id ? "Approving..." : "Approve"}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-sm text-muted-foreground py-8">No pending approvals</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {tab === "invite" && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Send Invitation</CardTitle>
+            <CardDescription>Create and share an invite link with new members</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {!inviteLink ? (
+              <>
+                <div>
+                  <Label htmlFor="phone">Phone Number (E.164 format)</Label>
+                  <Input
+                    id="phone"
+                    placeholder="+1 (555) 123-4001"
+                    value={invitePhone}
+                    onChange={(e) => setInvitePhone(e.target.value)}
+                  />
+                </div>
+                {inviteError && <Alert variant="destructive"><AlertDescription>{inviteError}</AlertDescription></Alert>}
+                <Button onClick={handleCreateInvite} className="w-full">Generate Invite Link</Button>
+              </>
+            ) : (
+              <>
+                <Alert variant="default">
+                  <AlertDescription>Invite link created! Share this link with the new member.</AlertDescription>
+                </Alert>
+                <div className="bg-muted p-3 rounded-md font-mono text-xs break-all cursor-pointer hover:bg-muted/80" onClick={() => {
+                  navigator.clipboard.writeText(inviteLink);
+                  alert("Link copied to clipboard!");
+                }}>
+                  {inviteLink}
+                </div>
+                <Button variant="outline" onClick={() => setInviteLink(undefined)} className="w-full">Create Another Invite</Button>
+              </>
+            )}
+          </CardContent>
+        </Card>
       )}
     </div>
   );
