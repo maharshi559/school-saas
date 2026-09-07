@@ -23,16 +23,15 @@ export async function schoolRoutes(app: FastifyInstance) {
     "/class-levels",
     { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN"])] },
     async (request, reply) => {
-      const { name, abbreviation, order } = z
+      const { name, rank } = z
         .object({
           name: z.string().min(1),
-          abbreviation: z.string().min(1),
-          order: z.number().int().default(0),
+          rank: z.number().int(),
         })
         .parse(request.body);
 
       const level = await prisma.classLevel.create({
-        data: { name, abbreviation, order, tenantId: request.tenant.id },
+        data: { name, rank, tenantId: request.tenant.id },
       });
 
       return reply.code(201).send(level);

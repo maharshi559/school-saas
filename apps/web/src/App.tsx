@@ -1302,7 +1302,7 @@ function ClassesView({ membership }: { membership: any }) {
 
   // Form state
   const [levelName, setLevelName] = useState("");
-  const [levelAbbr, setLevelAbbr] = useState("");
+  const [levelRank, setLevelRank] = useState("0");
   const [yearValue, setYearValue] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -1344,16 +1344,16 @@ function ClassesView({ membership }: { membership: any }) {
   }, [membership?.tenantId]);
 
   const handleCreateLevel = async () => {
-    if (!levelName || !levelAbbr) return;
+    if (!levelName || !levelRank) return;
     try {
       const res = await apiFetch<any>("/class-levels", {
         tenantId: membership.tenantId,
         method: "POST",
-        body: JSON.stringify({ name: levelName, abbreviation: levelAbbr, order: levels.length }),
+        body: JSON.stringify({ name: levelName, rank: parseInt(levelRank) }),
       });
       setLevels([...levels, res]);
       setLevelName("");
-      setLevelAbbr("");
+      setLevelRank("0");
       setFormStep("year");
     } catch (e) {
       console.error(e);
@@ -1425,8 +1425,8 @@ function ClassesView({ membership }: { membership: any }) {
                   <Input id="levelName" placeholder="e.g., Grade 9" value={levelName} onChange={(e) => setLevelName(e.target.value)} />
                 </div>
                 <div>
-                  <Label htmlFor="levelAbbr">Abbreviation</Label>
-                  <Input id="levelAbbr" placeholder="e.g., IX" value={levelAbbr} onChange={(e) => setLevelAbbr(e.target.value)} />
+                  <Label htmlFor="levelRank">Rank</Label>
+                  <Input id="levelRank" type="number" placeholder="e.g., 1" value={levelRank} onChange={(e) => setLevelRank(e.target.value)} />
                 </div>
                 <Button onClick={handleCreateLevel} className="w-full">Create Level</Button>
               </>
