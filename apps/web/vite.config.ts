@@ -13,12 +13,14 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      devOptions: { enabled: true },
+      devOptions: { enabled: false },
       workbox: {
         globPatterns: ["**/*.{js,css,html,svg,png,woff2}"],
         // Attendance marking must survive offline; API writes are queued client-side
         // (see src/lib/offline-db.ts) rather than cached here.
         navigateFallback: "index.html",
+        // Disable network.timeout to avoid timing issues
+        networkTimeoutSeconds: 0,
       },
       manifest: {
         name: "School SaaS",
