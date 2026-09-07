@@ -9,6 +9,7 @@ import { Label } from "./components/ui/label.js";
 import { Alert, AlertDescription } from "./components/ui/alert.js";
 import { Avatar } from "./components/ui/avatar.js";
 import { ToastContainer, type Toast } from "./components/Toast.js";
+import { LanguageProvider, useLanguage } from "./lib/i18n.js";
 
 type Student = {
   id: string;
@@ -179,22 +180,26 @@ export default function App() {
 
   if (isAppAdmin || !hasSchoolMembership) {
     return (
-      <AdminPortal
+      <LanguageProvider>
+        <AdminPortal
+          user={user}
+          theme={theme}
+          onThemeChange={setTheme}
+          onLogout={() => (setToken(null), setUser(null))}
+        />
+      </LanguageProvider>
+    );
+  }
+
+  return (
+    <LanguageProvider>
+      <AppShell
         user={user}
         theme={theme}
         onThemeChange={setTheme}
         onLogout={() => (setToken(null), setUser(null))}
       />
-    );
-  }
-
-  return (
-    <AppShell
-      user={user}
-      theme={theme}
-      onThemeChange={setTheme}
-      onLogout={() => (setToken(null), setUser(null))}
-    />
+    </LanguageProvider>
   );
 }
 
@@ -330,6 +335,7 @@ function AppShell({
   onThemeChange: (t: "light" | "dark") => void;
   onLogout: () => void;
 }) {
+  const { language, setLanguage, t } = useLanguage();
   const active = user.memberships.filter((m) => m.status === "ACTIVE");
   const [tenantId, setTenantId] = useState(active[0]?.tenantId ?? "");
   const [activeView, setActiveViewState] = useState<SidebarView>(() => {
@@ -455,13 +461,22 @@ function AppShell({
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => setLanguage(language === "en" ? "hi" : "en")}
+              className="text-muted-foreground text-xs font-medium"
+              title={`Switch to ${language === "en" ? "Hindi" : "English"}`}
+            >
+              {language === "en" ? "हिंदी" : "EN"}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => onThemeChange(theme === "light" ? "dark" : "light")}
               className="text-muted-foreground"
             >
               {theme === "light" ? <MoonIcon /> : <SunIcon />}
             </Button>
             <Button variant="ghost" onClick={onLogout} className="text-sm">
-              Sign out
+              {t("nav.signOut", "Sign out")}
             </Button>
           </div>
         </div>
@@ -1318,17 +1333,20 @@ function ClassesView({ membership }: { membership: any }) {
   const [years, setYears] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [formStep, setFormStep] = useState<"level" | "year" | "section">("level");
+  const [formStep, setFormStep] = useState<"year" | "level" | "section">("year");
 
   // Form state
-  const [levelName, setLevelName] = useState("");
-  const [levelRank, setLevelRank] = useState("0");
   const [yearValue, setYearValue] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [levelName, setLevelName] = useState("");
   const [sectionName, setSectionName] = useState("");
-  const [selectedLevelId, setSelectedLevelId] = useState("");
   const [selectedYearId, setSelectedYearId] = useState("");
+  const [selectedLevelId, setSelectedLevelId] = useState("");
+
+  // Mode tracking
+  const [yearMode, setYearMode] = useState<"new" | "existing">("existing");
+  const [levelMode, setLevelMode] = useState<"new" | "existing">("existing");
 
   useEffect(() => {
     if (!membership) return;
@@ -1363,72 +1381,79 @@ function ClassesView({ membership }: { membership: any }) {
     };
   }, [membership?.tenantId]);
 
-  const handleCreateLevel = async () => {
-    if (!levelName || !levelRank) return;
-    const rank = parseInt(levelRank, 10);
-    if (isNaN(rank) || rank <= 0) return;
-    if (levels.some((l) => l.name === levelName)) {
-      alert(`Class level "${levelName}" already exists`);
-      return;
-    }
-    if (levels.some((l) => l.rank === rank)) {
-      alert("A level with this rank already exists");
-      return;
-    }
-    try {
-      const res = await apiFetch<any>("/class-levels", {
-        tenantId: membership.tenantId,
-        method: "POST",
-        body: JSON.stringify({ name: levelName, rank }),
-      });
-      setLevels([...levels, res]);
-      setLevelName("");
-      setLevelRank("0");
-      setFormStep("year");
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : "Failed to create class level";
-      if (errorMsg.includes("Unique constraint")) {
-        alert(`Class level "${levelName}" already exists for this school`);
-      } else {
-        alert(errorMsg);
+  const handleYearNext = async () => {
+    if (yearMode === "existing") {
+      if (!selectedYearId) {
+        alert("Please select an academic year");
+        return;
+      }
+      setFormStep("level");
+    } else {
+      if (!yearValue || !startDate || !endDate) return;
+      if (years.some((y) => y.name === yearValue)) {
+        alert(`Academic year "${yearValue}" already exists`);
+        return;
+      }
+      try {
+        const res = await apiFetch<any>("/academic-years", {
+          tenantId: membership.tenantId,
+          method: "POST",
+          body: JSON.stringify({ year: yearValue, startDate: new Date(startDate).toISOString(), endDate: new Date(endDate).toISOString() }),
+        });
+        setYears([...years, res]);
+        setSelectedYearId(res.id);
+        setYearValue("");
+        setStartDate("");
+        setEndDate("");
+        setFormStep("level");
+      } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : "Failed to create academic year";
+        if (errorMsg.includes("Unique constraint")) {
+          alert(`Academic year "${yearValue}" already exists for this school`);
+        } else {
+          alert(errorMsg);
+        }
       }
     }
   };
 
-  const handleCreateYear = async () => {
-    if (!yearValue || !startDate || !endDate) return;
-
-    // Check if year already exists
-    if (years.some((y) => y.name === yearValue)) {
-      alert(`Academic year "${yearValue}" already exists`);
-      return;
-    }
-
-    try {
-      const res = await apiFetch<any>("/academic-years", {
-        tenantId: membership.tenantId,
-        method: "POST",
-        body: JSON.stringify({ year: yearValue, startDate: new Date(startDate).toISOString(), endDate: new Date(endDate).toISOString() }),
-      });
-      setYears([...years, res]);
-      setYearValue("");
-      setStartDate("");
-      setEndDate("");
+  const handleLevelNext = async () => {
+    if (levelMode === "existing") {
+      if (!selectedLevelId) {
+        alert("Please select a class level");
+        return;
+      }
       setFormStep("section");
-    } catch (e) {
-      const errorMsg = e instanceof Error ? e.message : "Failed to create academic year";
-      if (errorMsg.includes("Unique constraint")) {
-        alert(`Academic year "${yearValue}" already exists for this school`);
-      } else {
-        alert(errorMsg);
+    } else {
+      if (!levelName) return;
+      if (levels.some((l) => l.name === levelName)) {
+        alert(`Class level "${levelName}" already exists`);
+        return;
+      }
+      try {
+        const res = await apiFetch<any>("/class-levels", {
+          tenantId: membership.tenantId,
+          method: "POST",
+          body: JSON.stringify({ name: levelName, rank: levels.length + 1 }),
+        });
+        setLevels([...levels, res]);
+        setSelectedLevelId(res.id);
+        setLevelName("");
+        setFormStep("section");
+      } catch (e) {
+        const errorMsg = e instanceof Error ? e.message : "Failed to create class level";
+        if (errorMsg.includes("Unique constraint")) {
+          alert(`Class level "${levelName}" already exists for this school`);
+        } else {
+          alert(errorMsg);
+        }
       }
     }
   };
 
-  const handleCreateSection = async () => {
+  const handleSectionSubmit = async () => {
     if (!sectionName || !selectedLevelId || !selectedYearId) return;
 
-    // Check if section already exists for this level and year
     if (sections.some((s) => s.classLevelId === selectedLevelId && s.academicYearId === selectedYearId && s.name === sectionName)) {
       alert(`Section "${sectionName}" already exists for this class and year`);
       return;
@@ -1445,14 +1470,12 @@ function ClassesView({ membership }: { membership: any }) {
       setSelectedLevelId("");
       setSelectedYearId("");
       setShowForm(false);
-      setFormStep("level");
+      setFormStep("year");
+      setYearMode("existing");
+      setLevelMode("existing");
     } catch (e) {
       const errorMsg = e instanceof Error ? e.message : "Failed to create section";
-      if (errorMsg.includes("Unique constraint")) {
-        alert(`Section "${sectionName}" already exists for this class and year`);
-      } else {
-        alert(errorMsg);
-      }
+      alert(errorMsg);
     }
   };
 
@@ -1473,40 +1496,146 @@ function ClassesView({ membership }: { membership: any }) {
         <Card>
           <CardHeader>
             <CardTitle className="text-lg">
-              {formStep === "level" ? "Create Class Level" : formStep === "year" ? "Create Academic Year" : "Create Section"}
+              {formStep === "year" ? "Step 1: Academic Year" : formStep === "level" ? "Step 2: Class Level" : "Step 3: Section"}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {formStep === "level" && (
-              <>
-                <div>
-                  <Label htmlFor="levelName">Class Name</Label>
-                  <Input id="levelName" placeholder="e.g., Grade 9" value={levelName} onChange={(e) => setLevelName(e.target.value)} />
-                </div>
-                <div>
-                  <Label htmlFor="levelRank">Rank</Label>
-                  <Input id="levelRank" type="number" placeholder="e.g., 1" value={levelRank} onChange={(e) => setLevelRank(e.target.value)} />
-                </div>
-                <Button onClick={handleCreateLevel} className="w-full">Create Level</Button>
-              </>
-            )}
             {formStep === "year" && (
               <>
-                <div>
-                  <Label htmlFor="yearValue">Academic Year</Label>
-                  <Input id="yearValue" placeholder="e.g., 2024-25" value={yearValue} onChange={(e) => setYearValue(e.target.value)} />
+                <div className="space-y-3">
+                  <Label>Select or create an academic year</Label>
+                  <div className="flex gap-4">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        id="yearExisting"
+                        name="yearMode"
+                        value="existing"
+                        checked={yearMode === "existing"}
+                        onChange={() => {
+                          setYearMode("existing");
+                          setYearValue("");
+                          setStartDate("");
+                          setEndDate("");
+                        }}
+                        className="h-4 w-4"
+                      />
+                      <Label htmlFor="yearExisting" className="cursor-pointer font-normal">Use existing</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        id="yearNew"
+                        name="yearMode"
+                        value="new"
+                        checked={yearMode === "new"}
+                        onChange={() => {
+                          setYearMode("new");
+                          setSelectedYearId("");
+                        }}
+                        className="h-4 w-4"
+                      />
+                      <Label htmlFor="yearNew" className="cursor-pointer font-normal">Create new</Label>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="startDate">Start Date</Label>
-                  <Input id="startDate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+
+                {yearMode === "existing" ? (
+                  <div>
+                    <Label htmlFor="yearSelect">Select Academic Year</Label>
+                    <select id="yearSelect" value={selectedYearId} onChange={(e) => setSelectedYearId(e.target.value)} className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground">
+                      <option value="">Choose an academic year</option>
+                      {years.map((y) => (
+                        <option key={y.id} value={y.id}>{y.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <>
+                    <div>
+                      <Label htmlFor="yearValue">Academic Year</Label>
+                      <Input id="yearValue" placeholder="e.g., 2024-25" value={yearValue} onChange={(e) => setYearValue(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label htmlFor="startDate">Start Date</Label>
+                      <Input id="startDate" type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label htmlFor="endDate">End Date</Label>
+                      <Input id="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                    </div>
+                  </>
+                )}
+
+                <div className="flex gap-3 justify-end pt-4">
+                  <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
+                  <Button onClick={handleYearNext}>Next</Button>
                 </div>
-                <div>
-                  <Label htmlFor="endDate">End Date</Label>
-                  <Input id="endDate" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
-                </div>
-                <Button onClick={handleCreateYear} className="w-full">Create Year</Button>
               </>
             )}
+
+            {formStep === "level" && (
+              <>
+                <div className="space-y-3">
+                  <Label>Select or create a class level</Label>
+                  <div className="flex gap-4">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        id="levelExisting"
+                        name="levelMode"
+                        value="existing"
+                        checked={levelMode === "existing"}
+                        onChange={() => {
+                          setLevelMode("existing");
+                          setLevelName("");
+                        }}
+                        className="h-4 w-4"
+                      />
+                      <Label htmlFor="levelExisting" className="cursor-pointer font-normal">Use existing</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="radio"
+                        id="levelNew"
+                        name="levelMode"
+                        value="new"
+                        checked={levelMode === "new"}
+                        onChange={() => {
+                          setLevelMode("new");
+                          setSelectedLevelId("");
+                        }}
+                        className="h-4 w-4"
+                      />
+                      <Label htmlFor="levelNew" className="cursor-pointer font-normal">Create new</Label>
+                    </div>
+                  </div>
+                </div>
+
+                {levelMode === "existing" ? (
+                  <div>
+                    <Label htmlFor="levelSelect">Select Class Level</Label>
+                    <select id="levelSelect" value={selectedLevelId} onChange={(e) => setSelectedLevelId(e.target.value)} className="w-full px-3 py-2 border border-input rounded-md text-sm bg-background text-foreground">
+                      <option value="">Choose a class level</option>
+                      {levels.map((l) => (
+                        <option key={l.id} value={l.id}>{l.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div>
+                    <Label htmlFor="levelName">Class Name</Label>
+                    <Input id="levelName" placeholder="e.g., Grade 9" value={levelName} onChange={(e) => setLevelName(e.target.value)} />
+                  </div>
+                )}
+
+                <div className="flex gap-3 justify-end pt-4">
+                  <Button variant="outline" onClick={() => setFormStep("year")}>Back</Button>
+                  <Button onClick={handleLevelNext}>Next</Button>
+                </div>
+              </>
+            )}
+
             {formStep === "section" && (
               <>
                 <div>
@@ -1531,7 +1660,11 @@ function ClassesView({ membership }: { membership: any }) {
                   <Label htmlFor="sectionName">Section Name</Label>
                   <Input id="sectionName" placeholder="e.g., Section A" value={sectionName} onChange={(e) => setSectionName(e.target.value)} />
                 </div>
-                <Button onClick={handleCreateSection} className="w-full">Create Section</Button>
+
+                <div className="flex gap-3 justify-end pt-4">
+                  <Button variant="outline" onClick={() => setFormStep("level")}>Back</Button>
+                  <Button onClick={handleSectionSubmit}>Create Section</Button>
+                </div>
               </>
             )}
           </CardContent>
@@ -2585,6 +2718,7 @@ function AdminPortal({
   onThemeChange: (t: "light" | "dark") => void;
   onLogout: () => void;
 }) {
+  const { language, setLanguage, t } = useLanguage();
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string>();
@@ -2779,13 +2913,22 @@ function AdminPortal({
             <Button
               variant="ghost"
               size="sm"
+              onClick={() => setLanguage(language === "en" ? "hi" : "en")}
+              className="text-muted-foreground text-xs font-medium"
+              title={`Switch to ${language === "en" ? "Hindi" : "English"}`}
+            >
+              {language === "en" ? "हिंदी" : "EN"}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => onThemeChange(theme === "light" ? "dark" : "light")}
               className="text-muted-foreground"
             >
               {theme === "light" ? <MoonIcon /> : <SunIcon />}
             </Button>
             <Button variant="ghost" onClick={onLogout} className="text-sm">
-              Sign out
+              {t("nav.signOut", "Sign out")}
             </Button>
           </div>
         </div>
