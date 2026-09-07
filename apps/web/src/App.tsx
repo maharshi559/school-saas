@@ -323,9 +323,19 @@ function AppShell({
       setStudents([]);
       return;
     }
+
+    let mounted = true;
     apiFetch<{ items: Student[] }>("/students?limit=50", { tenantId })
-      .then((r) => setStudents(r.items))
-      .catch((e) => setNote(e instanceof Error ? e.message : "Failed to load students"));
+      .then((r) => {
+        if (mounted) setStudents(r.items);
+      })
+      .catch((e) => {
+        if (mounted) setNote(e instanceof Error ? e.message : "Failed to load students");
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, [tenantId, membership]);
 
   const sidebarItems: Array<{ id: SidebarView; label: string; icon: React.ReactNode }> = [
@@ -1127,11 +1137,23 @@ function TeachersView({ membership }: { membership: any }) {
 
   useEffect(() => {
     if (!membership) return;
+
+    let mounted = true;
     setLoading(true);
     apiFetch<{ items: any[] }>("/teachers", { tenantId: membership.tenantId })
-      .then((r) => setTeachers(r.items))
-      .catch(() => setTeachers([]))
-      .finally(() => setLoading(false));
+      .then((r) => {
+        if (mounted) setTeachers(r.items);
+      })
+      .catch(() => {
+        if (mounted) setTeachers([]);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, [membership]);
 
   return (
@@ -1195,11 +1217,23 @@ function ClassesView({ membership }: { membership: any }) {
 
   useEffect(() => {
     if (!membership) return;
+
+    let mounted = true;
     setLoading(true);
     apiFetch<{ items: any[] }>("/class-sections", { tenantId: membership.tenantId })
-      .then((r) => setSections(r.items))
-      .catch(() => setSections([]))
-      .finally(() => setLoading(false));
+      .then((r) => {
+        if (mounted) setSections(r.items);
+      })
+      .catch(() => {
+        if (mounted) setSections([]);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, [membership]);
 
   return (

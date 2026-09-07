@@ -77,23 +77,6 @@ export async function schoolRoutes(app: FastifyInstance) {
     }
   );
 
-  // Get all class sections
-  app.get(
-    "/class-sections",
-    { preHandler: [app.authenticate] },
-    async (request, reply) => {
-      const sections = await request.prisma.classSection.findMany({
-        where: { tenantId: request.currentTenant.id },
-        include: {
-          classLevel: true,
-          academicYear: true,
-        },
-        orderBy: [{ academicYear: { year: "desc" } }, { classLevel: { order: "asc" } }],
-      });
-      return reply.send({ items: sections });
-    }
-  );
-
   // Create class section
   app.post(
     "/class-sections",
@@ -233,83 +216,6 @@ export async function schoolRoutes(app: FastifyInstance) {
       });
 
       return reply.send(student);
-    }
-  );
-
-  // Create student
-  app.post(
-    "/students",
-    { preHandler: [app.authenticate] },
-    async (request, reply) => {
-      const { firstName, lastName, admissionNo, classSectionId, dateOfBirth } = z
-        .object({
-          firstName: z.string().min(1),
-          lastName: z.string().default(""),
-          admissionNo: z.string().min(1),
-          classSectionId: z.string().optional(),
-          dateOfBirth: z.string().datetime().optional(),
-        })
-        .parse(request.body);
-
-      const student = await request.prisma.student.create({
-        data: {
-          firstName,
-          lastName,
-          admissionNo,
-          classSectionId,
-          dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
-          tenantId: request.currentTenant.id,
-        },
-        include: { classSection: true },
-      });
-
-      return reply.code(201).send(student);
-    }
-  );
-
-  // Update student
-  app.patch(
-    "/students/:id",
-    { preHandler: [app.authenticate] },
-    async (request, reply) => {
-      const { id } = request.params as { id: string };
-      const { firstName, lastName, dateOfBirth, classSectionId } = z
-        .object({
-          firstName: z.string().min(1).optional(),
-          lastName: z.string().optional(),
-          dateOfBirth: z.string().datetime().optional(),
-          classSectionId: z.string().optional(),
-        })
-        .parse(request.body);
-
-      const student = await request.prisma.student.update({
-        where: { id },
-        data: {
-          ...(firstName && { firstName }),
-          ...(lastName && { lastName }),
-          ...(dateOfBirth && { dateOfBirth: new Date(dateOfBirth) }),
-          ...(classSectionId && { classSectionId }),
-        },
-        include: { classSection: true },
-      });
-
-      return reply.send(student);
-    }
-  );
-
-  // Delete student (soft delete)
-  app.delete(
-    "/students/:id",
-    { preHandler: [app.authenticate] },
-    async (request, reply) => {
-      const { id } = request.params as { id: string };
-
-      await request.prisma.student.update({
-        where: { id },
-        data: { deletedAt: new Date() },
-      });
-
-      return reply.code(204).send();
     }
   );
 }
