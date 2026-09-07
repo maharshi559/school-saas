@@ -1147,7 +1147,6 @@ function TeachersView({ membership }: { membership: any }) {
 
     let mounted = true;
     setLoading(true);
-    console.log("Fetching teachers with tenantId:", membership.tenantId);
     apiFetch<{ items: any[] }>("/teachers", { tenantId: membership.tenantId })
       .then((r) => {
         if (mounted) setTeachers(r.items);
