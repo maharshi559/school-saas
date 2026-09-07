@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { UserShield } from "lucide-react";
 import type { SessionUser } from "@school/shared";
 import { apiFetch, auth, getToken, setToken } from "./lib/api.js";
 import { Button } from "./components/ui/button.js";
@@ -51,10 +52,7 @@ const UsersIcon = ({ className = "h-5 w-5" }: { className?: string } = {}) => (
 );
 
 const TeachersIcon = ({ className = "h-5 w-5" }: { className?: string } = {}) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path d="M12 3L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-4z" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M12 12v5M9 15h6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
+  <UserShield className={className} strokeWidth={2} />
 );
 
 const CheckSquareIcon = () => (
