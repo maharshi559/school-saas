@@ -19,8 +19,6 @@ export default defineConfig({
         // Attendance marking must survive offline; API writes are queued client-side
         // (see src/lib/offline-db.ts) rather than cached here.
         navigateFallback: "index.html",
-        // Disable network.timeout to avoid timing issues
-        networkTimeoutSeconds: 0,
       },
       manifest: {
         name: "School SaaS",
