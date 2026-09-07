@@ -885,7 +885,7 @@ function AppShell({
       </div>
 
       {/* Mobile Bottom Navigation - Visible only on mobile */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 bg-background px-0">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 px-0">
         <div className="flex items-center justify-around h-16 overflow-x-auto">
           {navItems.map((item) => (
             <button
@@ -893,7 +893,7 @@ function AppShell({
               onClick={() => setActiveView(item.id)}
               className={`flex flex-col items-center justify-center h-16 min-w-16 transition-colors ${
                 activeView === item.id
-                  ? "text-accent border-t-2 border-accent"
+                  ? "text-accent"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
