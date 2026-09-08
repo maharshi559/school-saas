@@ -7,7 +7,7 @@ import { Alert, AlertDescription } from "../../components/ui/alert.js";
 import { ToastContainer } from "../../components/Toast.js";
 import { useToasts } from "../../lib/use-toasts.js";
 import { FormField, ErrorMessage, EmptyState, StatusBadge } from "../../lib/ui-helpers.js";
-import { EditIcon, PlusIcon, CheckIcon, CloseIcon, PencilIcon, UsersIcon } from "lucide-react";
+import { Edit2, Plus, Check, X, Pencil, Users } from "lucide-react";
 import type { Student, StudentFormData } from "../../types/index.js";
 
 export function StudentsView({ membership, students, note }: { membership: any; students: Student[]; note?: string }) {
@@ -140,7 +140,7 @@ export function StudentsView({ membership, students, note }: { membership: any; 
           <p className="mt-1 text-sm text-muted-foreground">{students.length} {students.length === 1 ? "student" : "students"} enrolled</p>
         </div>
         {!showForm && (
-          <Button onClick={() => openForm()} className="flex items-center gap-2"><PlusIcon />Add Student</Button>
+          <Button onClick={() => openForm()} className="flex items-center gap-2"><Plus />Add Student</Button>
         )}
       </div>
 
@@ -219,13 +219,13 @@ export function StudentsView({ membership, students, note }: { membership: any; 
                       {inlineEditingId === s.id && inlineEditField === "classSection" ? (
                         <div className="flex gap-2">
                           <Input type="text" value={inlineEditValue} onChange={(e) => setInlineEditValue(e.target.value)} placeholder={s.classSection?.name || "Class section"} className="h-8 text-xs flex-1" disabled={inlineUpdating} />
-                          <Button size="sm" onClick={() => handleInlineUpdate(s.id, `${s.firstName} ${s.lastName}`)} disabled={inlineUpdating} className="h-8 px-2"><CheckIcon /></Button>
-                          <Button size="sm" variant="outline" onClick={() => { setInlineEditingId(null); setInlineEditField(null); setInlineEditValue(""); }} disabled={inlineUpdating} className="h-8 px-2"><CloseIcon /></Button>
+                          <Button size="sm" onClick={() => handleInlineUpdate(s.id, `${s.firstName} ${s.lastName}`)} disabled={inlineUpdating} className="h-8 px-2"><Check /></Button>
+                          <Button size="sm" variant="outline" onClick={() => { setInlineEditingId(null); setInlineEditField(null); setInlineEditValue(""); }} disabled={inlineUpdating} className="h-8 px-2"><X /></Button>
                         </div>
                       ) : (
                         <div className="flex items-center justify-between gap-2 group">
                           <span className="text-foreground">{s.classSection?.name || "—"}</span>
-                          <Button size="sm" variant="ghost" onClick={() => { setInlineEditingId(s.id); setInlineEditField("classSection"); setInlineEditValue(s.classSectionId || ""); }} className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"><PencilIcon /></Button>
+                          <Button size="sm" variant="ghost" onClick={() => { setInlineEditingId(s.id); setInlineEditField("classSection"); setInlineEditValue(s.classSectionId || ""); }} className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"><Pencil /></Button>
                         </div>
                       )}
                     </td>
@@ -238,19 +238,19 @@ export function StudentsView({ membership, students, note }: { membership: any; 
                             <option value="GRADUATED">Graduated</option>
                             <option value="TRANSFERRED">Transferred</option>
                           </select>
-                          <Button size="sm" onClick={() => handleInlineUpdate(s.id, `${s.firstName} ${s.lastName}`)} disabled={inlineUpdating} className="h-8 px-2"><CheckIcon /></Button>
-                          <Button size="sm" variant="outline" onClick={() => { setInlineEditingId(null); setInlineEditField(null); setInlineEditValue(""); }} disabled={inlineUpdating} className="h-8 px-2"><CloseIcon /></Button>
+                          <Button size="sm" onClick={() => handleInlineUpdate(s.id, `${s.firstName} ${s.lastName}`)} disabled={inlineUpdating} className="h-8 px-2"><Check /></Button>
+                          <Button size="sm" variant="outline" onClick={() => { setInlineEditingId(null); setInlineEditField(null); setInlineEditValue(""); }} disabled={inlineUpdating} className="h-8 px-2"><X /></Button>
                         </div>
                       ) : (
                         <div className="flex items-center justify-between gap-2 group">
                           <StatusBadge status={(s.enrollmentStatus || "").toLowerCase()} variant={s.enrollmentStatus === "ENROLLED" ? "success" : s.enrollmentStatus === "INACTIVE" ? "default" : "info"} />
-                          <Button size="sm" variant="ghost" onClick={() => { setInlineEditingId(s.id); setInlineEditField("status"); setInlineEditValue(s.enrollmentStatus || ""); }} className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"><PencilIcon /></Button>
+                          <Button size="sm" variant="ghost" onClick={() => { setInlineEditingId(s.id); setInlineEditField("status"); setInlineEditValue(s.enrollmentStatus || ""); }} className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"><Pencil /></Button>
                         </div>
                       )}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <div className="flex items-center justify-center gap-2">
-                        <Button size="sm" variant="ghost" onClick={() => openForm(s)} className="h-8 w-8 p-0 text-foreground hover:bg-muted"><EditIcon /></Button>
+                        <Button size="sm" variant="ghost" onClick={() => openForm(s)} className="h-8 w-8 p-0 text-foreground hover:bg-muted"><Edit2 /></Button>
                         <Button size="sm" variant="ghost" onClick={() => handleDelete(s.id, `${s.firstName} ${s.lastName}`)} className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10">✕</Button>
                       </div>
                     </td>
@@ -259,7 +259,7 @@ export function StudentsView({ membership, students, note }: { membership: any; 
               </tbody>
             </table>
           ) : (
-            <EmptyState icon={<UsersIcon />} title="No students yet" description="Add your first student to get started managing attendance, grades, and communications" action={{ label: "Add the first student", onClick: () => openForm() }} />
+            <EmptyState icon={<Users />} title="No students yet" description="Add your first student to get started managing attendance, grades, and communications" action={{ label: "Add the first student", onClick: () => openForm() }} />
           )}
         </div>
       </Card>

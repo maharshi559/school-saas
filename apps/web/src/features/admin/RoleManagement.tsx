@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../..
 import { ToastContainer } from "../../components/Toast.js";
 import { useToasts } from "../../lib/use-toasts.js";
 import { FormField, EmptyState, LoadingState, StatusBadge } from "../../lib/ui-helpers.js";
-import { UsersIcon } from "lucide-react";
+import { Users } from "lucide-react";
 import type { UserWithRoles } from "../../types/index.js";
 
 export function RoleManagement() {
@@ -112,7 +112,7 @@ export function RoleManagement() {
           </div>
         </Card>
       ) : (
-        <Card><CardContent className="py-12"><EmptyState icon={<UsersIcon />} title="No users with app-level roles yet" description="Use the form above to grant APP_ADMIN or APP_SUPPORT roles to users" /></CardContent></Card>
+        <Card><CardContent className="py-12"><EmptyState icon={<Users />} title="No users with app-level roles yet" description="Use the form above to grant APP_ADMIN or APP_SUPPORT roles to users" /></CardContent></Card>
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api.js";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card.js";
-import { UsersIcon, TeachersIcon, BookIcon, GridIcon } from "lucide-react";
+import { Users, Users, Book, Grid } from "lucide-react";
 
 export function DashboardView({ membership }: { membership: any }) {
   const [stats, setStats] = useState({ totalStudents: 0, totalTeachers: 0, totalClasses: 0, totalSections: 0 });
@@ -36,10 +36,10 @@ export function DashboardView({ membership }: { membership: any }) {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
         {[
-          { label: "Total Students", value: stats.totalStudents, icon: <UsersIcon /> },
-          { label: "Total Teachers", value: stats.totalTeachers, icon: <TeachersIcon /> },
-          { label: "Total Classes", value: stats.totalClasses, icon: <BookIcon /> },
-          { label: "Total Sections", value: stats.totalSections, icon: <GridIcon /> },
+          { label: "Total Students", value: stats.totalStudents, icon: <Users /> },
+          { label: "Total Teachers", value: stats.totalTeachers, icon: <Users /> },
+          { label: "Total Classes", value: stats.totalClasses, icon: <Book /> },
+          { label: "Total Sections", value: stats.totalSections, icon: <Grid /> },
         ].map(({ label, value, icon }) => (
           <Card key={label} className="flex flex-col justify-between">
             <CardContent className="pt-6">

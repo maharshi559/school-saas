@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "../../components/ui/alert.js";
 import { Avatar } from "../../components/ui/avatar.js";
 import { useLanguage } from "../../lib/i18n.js";
 import { BackButton } from "../../lib/ui-helpers.js";
-import { DashboardIcon, UsersIcon, TeachersIcon, BookIcon, CheckSquareIcon, MessageIcon, WalletIcon, ShieldIcon, SettingsIcon, BellIcon, EditIcon, SunIcon, MoonIcon } from "lucide-react";
+import { LayoutDashboard, Users, Users, Book, CheckSquare2, MessageSquare, Wallet, Shield, Settings, Bell, Edit2, Sun, Moon } from "lucide-react";
 import { DashboardView } from "./DashboardView.js";
 import { StudentsView } from "./StudentsView.js";
 import { TeachersView } from "./TeachersView.js";
@@ -92,19 +92,19 @@ export function AppShell({ user, theme, onThemeChange, onLogout }: { user: Sessi
   }, [activeView, tenantId, membership?.tenantId]);
 
   const navItems = [
-    { id: "dashboard" as const, label: "Dashboard", icon: <DashboardIcon /> },
-    { id: "members" as const, label: "Members", icon: <UsersIcon /> },
-    { id: "students" as const, label: "Students", icon: <UsersIcon /> },
-    { id: "teachers" as const, label: "Teachers", icon: <TeachersIcon /> },
-    { id: "classes" as const, label: "Classes", icon: <BookIcon /> },
+    { id: "dashboard" as const, label: "Dashboard", icon: <LayoutDashboard /> },
+    { id: "members" as const, label: "Members", icon: <Users /> },
+    { id: "students" as const, label: "Students", icon: <Users /> },
+    { id: "teachers" as const, label: "Teachers", icon: <Users /> },
+    { id: "classes" as const, label: "Classes", icon: <Book /> },
   ];
 
   const sidebarGroups = [
-    { group: "Overview", items: [{ id: "dashboard" as const, label: "Dashboard", icon: <DashboardIcon /> }] },
-    { group: "People", items: [{ id: "members" as const, label: "Members", icon: <UsersIcon /> }, { id: "students" as const, label: "Students", icon: <UsersIcon /> }, { id: "teachers" as const, label: "Teachers", icon: <TeachersIcon /> }] },
-    { group: "Academic", items: [{ id: "classes" as const, label: "Classes", icon: <BookIcon /> }, { id: "attendance" as const, label: "Attendance", icon: <CheckSquareIcon /> }] },
-    { group: "Operations", items: [{ id: "communication" as const, label: "Communication", icon: <MessageIcon /> }, { id: "finance" as const, label: "Finance", icon: <WalletIcon /> }, { id: "consent" as const, label: "Consent", icon: <ShieldIcon /> }] },
-    { group: "Admin", items: [{ id: "settings" as const, label: "Org Settings", icon: <SettingsIcon /> }] },
+    { group: "Overview", items: [{ id: "dashboard" as const, label: "Dashboard", icon: <LayoutDashboard /> }] },
+    { group: "People", items: [{ id: "members" as const, label: "Members", icon: <Users /> }, { id: "students" as const, label: "Students", icon: <Users /> }, { id: "teachers" as const, label: "Teachers", icon: <Users /> }] },
+    { group: "Academic", items: [{ id: "classes" as const, label: "Classes", icon: <Book /> }, { id: "attendance" as const, label: "Attendance", icon: <CheckSquare2 /> }] },
+    { group: "Operations", items: [{ id: "communication" as const, label: "Communication", icon: <MessageSquare /> }, { id: "finance" as const, label: "Finance", icon: <Wallet /> }, { id: "consent" as const, label: "Consent", icon: <Shield /> }] },
+    { group: "Admin", items: [{ id: "settings" as const, label: "Org Settings", icon: <Settings /> }] },
   ];
 
   return (
@@ -116,7 +116,7 @@ export function AppShell({ user, theme, onThemeChange, onLogout }: { user: Sessi
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <h1 className="text-lg font-semibold text-foreground">{membership?.tenantName || "School"}</h1>
-                {active.length > 1 && <Button variant="ghost" size="sm" onClick={() => setShowOrgSwitch(!showOrgSwitch)} className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"><EditIcon /></Button>}
+                {active.length > 1 && <Button variant="ghost" size="sm" onClick={() => setShowOrgSwitch(!showOrgSwitch)} className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground"><Edit2 /></Button>}
               </div>
               {showOrgSwitch && active.length > 1 && (
                 <select className="mt-1 h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" value={tenantId} onChange={(e) => { setTenantId(e.target.value); setShowOrgSwitch(false); }}>
@@ -137,10 +137,10 @@ export function AppShell({ user, theme, onThemeChange, onLogout }: { user: Sessi
               </div>
             </div>
             <Button variant="ghost" size="sm" onClick={() => setLanguage(language === "en" ? "hi" : "en")} className="text-muted-foreground text-xs font-medium hidden sm:flex">{language === "en" ? "EN" : "हिंदी"}</Button>
-            <Button variant="ghost" size="sm" onClick={() => onThemeChange(theme === "light" ? "dark" : "light")} className="text-muted-foreground hidden sm:flex">{theme === "light" ? <MoonIcon /> : <SunIcon />}</Button>
+            <Button variant="ghost" size="sm" onClick={() => onThemeChange(theme === "light" ? "dark" : "light")} className="text-muted-foreground hidden sm:flex">{theme === "light" ? <Moon /> : <Sun />}</Button>
             <div className="relative">
               <button onClick={() => setShowNotifPanel((v) => !v)} className="relative h-9 w-9 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors" title="Notifications">
-                <BellIcon />
+                <Bell />
                 {unreadCount > 0 && <span className="absolute top-1 right-1 h-4 w-4 flex items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">{unreadCount > 9 ? "9+" : unreadCount}</span>}
               </button>
               {showNotifPanel && (

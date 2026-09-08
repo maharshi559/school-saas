@@ -6,7 +6,7 @@ import { Card, CardContent } from "../../components/ui/card.js";
 import { ToastContainer } from "../../components/Toast.js";
 import { useToasts } from "../../lib/use-toasts.js";
 import { FormField, EmptyState, LoadingState } from "../../lib/ui-helpers.js";
-import { UsersIcon } from "lucide-react";
+import { Users } from "lucide-react";
 import type { ClassSection, AttendanceStudent, AttendanceStatus } from "../../types/index.js";
 
 export function AttendanceView({ membership }: { membership: any }) {
@@ -185,7 +185,7 @@ export function AttendanceView({ membership }: { membership: any }) {
       )}
 
       {!loading && students.length === 0 && selectedSection && (
-        <Card><CardContent className="py-12"><EmptyState icon={<UsersIcon />} title="No students in this class" description="This class section has no enrolled students yet. Add students to start marking attendance." /></CardContent></Card>
+        <Card><CardContent className="py-12"><EmptyState icon={<Users />} title="No students in this class" description="This class section has no enrolled students yet. Add students to start marking attendance." /></CardContent></Card>
       )}
 
       {!selectedSection && !loading && (

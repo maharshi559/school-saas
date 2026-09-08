@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api.js";
 import { Button } from "../../components/ui/button.js";
 import { Card, CardContent } from "../../components/ui/card.js";
-import { UsersIcon, PlusIcon } from "lucide-react";
+import { Users, Plus } from "lucide-react";
 import { LoadingState, EmptyState } from "../../lib/ui-helpers.js";
 
 export function TeachersView({ membership }: { membership: any }) {
@@ -27,7 +27,7 @@ export function TeachersView({ membership }: { membership: any }) {
           <h2 className="text-2xl font-semibold text-foreground">Teachers</h2>
           <p className="mt-1 text-sm text-muted-foreground">Manage teachers in your school</p>
         </div>
-        <Button className="flex items-center gap-2"><PlusIcon />Add Teacher</Button>
+        <Button className="flex items-center gap-2"><Plus />Add Teacher</Button>
       </div>
 
       {loading ? (
@@ -61,7 +61,7 @@ export function TeachersView({ membership }: { membership: any }) {
         <Card>
           <CardContent className="py-12">
             <EmptyState
-              icon={<UsersIcon />}
+              icon={<Users />}
               title="No teachers yet"
               description="Add teachers to manage classes, mark attendance, and communicate with parents"
               action={{ label: "Add the first teacher", onClick: () => {} }}

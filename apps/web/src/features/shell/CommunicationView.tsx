@@ -5,7 +5,7 @@ import { Input } from "../../components/ui/input.js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card.js";
 import { FormField, ErrorMessage, SuccessMessage, StatusBadge } from "../../lib/ui-helpers.js";
 import { Select } from "../../components/ui/select.js";
-import { SparklesIcon, CloseIcon } from "lucide-react";
+import { SparklesIcon, X } from "lucide-react";
 
 export function CommunicationView({ membership }: { membership: any }) {
   const [tab, setTab] = useState<"suggestions" | "send" | "templates" | "history">("suggestions");
@@ -252,7 +252,7 @@ export function CommunicationView({ membership }: { membership: any }) {
                 <CardTitle className="text-lg">{selectedTemplate.name}</CardTitle>
                 <CardDescription>{selectedTemplate.type} · {selectedTemplate.channel}</CardDescription>
               </div>
-              <button onClick={() => setSelectedTemplate(null)} className="text-muted-foreground hover:text-foreground p-1"><CloseIcon className="h-5 w-5" /></button>
+              <button onClick={() => setSelectedTemplate(null)} className="text-muted-foreground hover:text-foreground p-1"><X className="h-5 w-5" /></button>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>

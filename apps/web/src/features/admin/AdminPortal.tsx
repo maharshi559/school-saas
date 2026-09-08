@@ -10,7 +10,7 @@ import { useToasts } from "../../lib/use-toasts.js";
 import { FormField, EmptyState, LoadingState, StatusBadge, ErrorMessage } from "../../lib/ui-helpers.js";
 import { Select } from "../../components/ui/select.js";
 import { useLanguage } from "../../lib/i18n.js";
-import { BuildingsIcon, UsersIcon, WalletIcon, CreditCardIcon, ShieldIcon, PlusIcon, EditIcon, CloseIcon, PencilIcon, CheckIcon, SunIcon, MoonIcon } from "lucide-react";
+import { Building, Users, Wallet, CreditCard, Shield, Plus, Edit2, X, Pencil, Check, Sun, Moon } from "lucide-react";
 import { RoleManagement } from "./RoleManagement.js";
 import type { Tenant, SchoolFormData } from "../../types/index.js";
 
@@ -109,11 +109,11 @@ export function AdminPortal({ user, theme, onThemeChange, onLogout }: { user: Se
   }
 
   const navItems: { id: AdminTab; label: string; icon: React.ReactNode; stub?: boolean }[] = [
-    { id: "schools", label: "Schools", icon: <BuildingsIcon /> },
-    { id: "roles", label: "Admin Users", icon: <UsersIcon /> },
-    { id: "sales", label: "Sales", icon: <WalletIcon />, stub: true },
-    { id: "finances", label: "Finances", icon: <CreditCardIcon />, stub: true },
-    { id: "account", label: "My Account", icon: <ShieldIcon /> },
+    { id: "schools", label: "Schools", icon: <Building /> },
+    { id: "roles", label: "Admin Users", icon: <Users /> },
+    { id: "sales", label: "Sales", icon: <Wallet />, stub: true },
+    { id: "finances", label: "Finances", icon: <CreditCard />, stub: true },
+    { id: "account", label: "My Account", icon: <Shield /> },
   ];
 
   return (
@@ -135,7 +135,7 @@ export function AdminPortal({ user, theme, onThemeChange, onLogout }: { user: Se
               <p className="text-xs text-muted-foreground">iskool Admin</p>
             </div>
             <Button variant="ghost" size="sm" onClick={() => setLanguage(language === "en" ? "hi" : "en")} className="text-muted-foreground text-xs font-medium">{language === "en" ? "हिंदी" : "EN"}</Button>
-            <Button variant="ghost" size="sm" onClick={() => onThemeChange(theme === "light" ? "dark" : "light")} className="text-muted-foreground">{theme === "light" ? <MoonIcon /> : <SunIcon />}</Button>
+            <Button variant="ghost" size="sm" onClick={() => onThemeChange(theme === "light" ? "dark" : "light")} className="text-muted-foreground">{theme === "light" ? <Moon /> : <Sun />}</Button>
             <Button variant="ghost" onClick={onLogout} className="text-sm">{t("nav.signOut", "Sign out")}</Button>
           </div>
         </div>
@@ -163,7 +163,7 @@ export function AdminPortal({ user, theme, onThemeChange, onLogout }: { user: Se
                 <>
                   <div className="flex items-center justify-between">
                     <div><h2 className="text-2xl font-semibold text-foreground">Schools</h2><p className="mt-1 text-sm text-muted-foreground">Manage all schools in your platform</p></div>
-                    {!showForm && <Button onClick={() => openForm()} className="flex items-center gap-2"><PlusIcon />Add School</Button>}
+                    {!showForm && <Button onClick={() => openForm()} className="flex items-center gap-2"><Plus />Add School</Button>}
                   </div>
 
                   {showForm && (
@@ -250,13 +250,13 @@ export function AdminPortal({ user, theme, onThemeChange, onLogout }: { user: Se
                                   {editingPhoneId === tenant.id ? (
                                     <div className="flex gap-2">
                                       <Input type="tel" value={newAdminPhone} onChange={(e) => setNewAdminPhone(e.target.value)} placeholder={tenant.adminPhone} className="h-8 text-xs flex-1" disabled={updatingPhone} />
-                                      <Button size="sm" onClick={() => handleUpdateAdminPhone(tenant.id)} disabled={updatingPhone} className="h-8 px-2"><CheckIcon /></Button>
-                                      <Button size="sm" variant="outline" onClick={() => { setEditingPhoneId(null); setNewAdminPhone(""); }} disabled={updatingPhone} className="h-8 px-2"><CloseIcon /></Button>
+                                      <Button size="sm" onClick={() => handleUpdateAdminPhone(tenant.id)} disabled={updatingPhone} className="h-8 px-2"><Check /></Button>
+                                      <Button size="sm" variant="outline" onClick={() => { setEditingPhoneId(null); setNewAdminPhone(""); }} disabled={updatingPhone} className="h-8 px-2"><X /></Button>
                                     </div>
                                   ) : (
                                     <div className="flex items-center justify-between gap-2 group">
                                       <span className="font-mono text-xs text-muted-foreground">{tenant.adminPhone}</span>
-                                      <Button size="sm" variant="ghost" onClick={() => { setEditingPhoneId(tenant.id); setNewAdminPhone(""); }} className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"><PencilIcon /></Button>
+                                      <Button size="sm" variant="ghost" onClick={() => { setEditingPhoneId(tenant.id); setNewAdminPhone(""); }} className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"><Pencil /></Button>
                                     </div>
                                   )}
                                 </td>
@@ -265,8 +265,8 @@ export function AdminPortal({ user, theme, onThemeChange, onLogout }: { user: Se
                                 <td className="hidden md:table-cell px-6 py-4 text-center font-mono text-foreground font-medium">{tenant._count.students}</td>
                                 <td className="px-6 py-4 text-center">
                                   <div className="flex items-center justify-center gap-2">
-                                    <Button size="sm" variant="ghost" onClick={() => openForm(tenant)} className="h-8 w-8 p-0 text-foreground hover:bg-muted"><EditIcon /></Button>
-                                    <Button size="sm" variant="ghost" onClick={() => handleDelete(tenant.id, tenant.name)} className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"><CloseIcon /></Button>
+                                    <Button size="sm" variant="ghost" onClick={() => openForm(tenant)} className="h-8 w-8 p-0 text-foreground hover:bg-muted"><Edit2 /></Button>
+                                    <Button size="sm" variant="ghost" onClick={() => handleDelete(tenant.id, tenant.name)} className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"><X /></Button>
                                   </div>
                                 </td>
                               </tr>
@@ -276,7 +276,7 @@ export function AdminPortal({ user, theme, onThemeChange, onLogout }: { user: Se
                       </div>
                     </Card>
                   ) : (
-                    <Card><CardContent className="py-12"><EmptyState icon={<BuildingsIcon />} title="No schools yet" description="Create and manage schools on your platform" action={{ label: "Create the first school", onClick: () => openForm() }} /></CardContent></Card>
+                    <Card><CardContent className="py-12"><EmptyState icon={<Building />} title="No schools yet" description="Create and manage schools on your platform" action={{ label: "Create the first school", onClick: () => openForm() }} /></CardContent></Card>
                   )}
                 </>
               )}
@@ -287,7 +287,7 @@ export function AdminPortal({ user, theme, onThemeChange, onLogout }: { user: Se
                 <div>
                   <h2 className="text-2xl font-semibold text-foreground mb-1">Sales</h2>
                   <p className="text-sm text-muted-foreground mb-6">Trial conversions, subscription pipeline, and MRR tracking</p>
-                  <Card><CardContent className="py-16 text-center"><WalletIcon className="h-10 w-10 mx-auto text-muted-foreground/40 mb-4" /><p className="text-muted-foreground font-medium">Sales dashboard coming soon</p><p className="text-sm text-muted-foreground/70 mt-1">Track trials, conversions, and revenue growth</p></CardContent></Card>
+                  <Card><CardContent className="py-16 text-center"><Wallet className="h-10 w-10 mx-auto text-muted-foreground/40 mb-4" /><p className="text-muted-foreground font-medium">Sales dashboard coming soon</p><p className="text-sm text-muted-foreground/70 mt-1">Track trials, conversions, and revenue growth</p></CardContent></Card>
                 </div>
               )}
 
@@ -295,7 +295,7 @@ export function AdminPortal({ user, theme, onThemeChange, onLogout }: { user: Se
                 <div>
                   <h2 className="text-2xl font-semibold text-foreground mb-1">Finances</h2>
                   <p className="text-sm text-muted-foreground mb-6">Platform-level billing, subscriptions, and payouts</p>
-                  <Card><CardContent className="py-16 text-center"><CreditCardIcon className="h-10 w-10 mx-auto text-muted-foreground/40 mb-4" /><p className="text-muted-foreground font-medium">Finance dashboard coming soon</p><p className="text-sm text-muted-foreground/70 mt-1">Monitor subscriptions, invoices, and platform revenue</p></CardContent></Card>
+                  <Card><CardContent className="py-16 text-center"><CreditCard className="h-10 w-10 mx-auto text-muted-foreground/40 mb-4" /><p className="text-muted-foreground font-medium">Finance dashboard coming soon</p><p className="text-sm text-muted-foreground/70 mt-1">Monitor subscriptions, invoices, and platform revenue</p></CardContent></Card>
                 </div>
               )}
 

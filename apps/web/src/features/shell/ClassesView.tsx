@@ -4,7 +4,7 @@ import { Button } from "../../components/ui/button.js";
 import { Input } from "../../components/ui/input.js";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card.js";
 import { Label } from "../../components/ui/label.js";
-import { BookIcon, PlusIcon } from "lucide-react";
+import { Book, Plus } from "lucide-react";
 import { ErrorMessage, SuccessMessage, EmptyState, LoadingState } from "../../lib/ui-helpers.js";
 
 export function ClassesView({ membership }: { membership: any }) {
@@ -108,7 +108,7 @@ export function ClassesView({ membership }: { membership: any }) {
           <p className="mt-1 text-sm text-muted-foreground">Create and manage class hierarchy</p>
         </div>
         <Button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2">
-          <PlusIcon />{showForm ? "Cancel" : "Add Class"}
+          <Plus />{showForm ? "Cancel" : "Add Class"}
         </Button>
       </div>
 
@@ -245,7 +245,7 @@ export function ClassesView({ membership }: { membership: any }) {
       ) : (
         <Card>
           <CardContent className="py-12">
-            <EmptyState icon={<BookIcon />} title="No classes yet" description="Create academic years, class levels, and sections to organize your school structure" action={{ label: "Create the first class", onClick: () => setShowForm(true) }} />
+            <EmptyState icon={<Book />} title="No classes yet" description="Create academic years, class levels, and sections to organize your school structure" action={{ label: "Create the first class", onClick: () => setShowForm(true) }} />
           </CardContent>
         </Card>
       )}

@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card.js";
 import { Button } from "../../components/ui/button.js";
-import { WalletIcon } from "lucide-react";
+import { Wallet } from "lucide-react";
 
 export function FinanceView({ membership: _membership }: { membership: any }) {
   return (
@@ -26,7 +26,7 @@ export function FinanceView({ membership: _membership }: { membership: any }) {
                   <p className={`text-2xl font-semibold font-mono ${className}`}>{value}</p>
                 </div>
                 <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${label === "Pending" ? "bg-destructive/10 text-destructive" : "bg-accent/10 text-accent"}`}>
-                  <WalletIcon className="h-5 w-5" />
+                  <Wallet className="h-5 w-5" />
                 </div>
               </div>
             </CardContent>

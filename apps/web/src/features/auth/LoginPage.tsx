@@ -6,7 +6,7 @@ import { Input } from "../../components/ui/input.js";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card.js";
 import { Label } from "../../components/ui/label.js";
 import { Alert, AlertDescription } from "../../components/ui/alert.js";
-import { ShieldIcon } from "lucide-react";
+import { Shield } from "lucide-react";
 
 export function LoginPage({ onDone }: { onDone: (u: SessionUser) => void }) {
   const [mode, setMode] = useState<"signin" | "register">("signin");
@@ -72,7 +72,7 @@ export function LoginPage({ onDone }: { onDone: (u: SessionUser) => void }) {
           <Card>
             <CardContent className="py-10 text-center">
               <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/10 mx-auto mb-4">
-                <ShieldIcon />
+                <Shield />
               </div>
               <h2 className="text-lg font-semibold text-foreground mb-2">Account Created</h2>
               <p className="text-sm text-muted-foreground mb-4">Your account is pending approval by an iskool admin. You'll be able to sign in once access is granted.</p>
