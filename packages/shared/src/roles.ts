@@ -1,5 +1,5 @@
-/**
- * The three MVP roles. Deliberately flat — no per-permission RBAC yet.
+﻿/**
+ * The three MVP roles. Deliberately flat â€” no per-permission RBAC yet.
  * See the school-management-saas skill: School Admin, Teacher, Parent.
  */
 export const ROLES = ["SCHOOL_ADMIN", "TEACHER", "PARENT"] as const;

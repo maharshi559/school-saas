@@ -1,5 +1,5 @@
-import type { FastifyInstance } from "fastify";
-import { prisma } from "@school/db";
+﻿import type { FastifyInstance } from "fastify";
+import { prisma } from "@iskool/db";
 import { z } from "zod";
 
 const createFeeStructureSchema = z.object({

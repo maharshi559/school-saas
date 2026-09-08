@@ -18,6 +18,8 @@
   --border: 214 15% 91%;
   --input: 214 15% 91%;
   --ring: 172 76% 48%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
   --radius: 0.5rem;
   color-scheme: light;
 }
@@ -39,6 +41,8 @@
     --border: 215 22% 20%;
     --input: 215 22% 14%;
     --ring: 166 92% 48%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
   }
 }
 
@@ -58,6 +62,8 @@
   --border: 215 22% 20%;
   --input: 215 22% 14%;
   --ring: 166 92% 48%;
+  --warning: 38 92% 50%;
+  --warning-foreground: 0 0% 100%;
 }
 
 body {

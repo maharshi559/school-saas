@@ -1,12 +1,12 @@
-import type { FastifyInstance } from "fastify";
-import { prisma } from "@school/db";
+﻿import type { FastifyInstance } from "fastify";
+import { prisma } from "@iskool/db";
 import { z } from "zod";
 
 // prisma.examScore is available after migration; cast until then
 const db = prisma as any;
 
 export async function examScoresRoutes(app: FastifyInstance) {
-  // ────────────────────── Exam Scores CRUD ──────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Exam Scores CRUD â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   // Create exam score (non-parent roles only)
   app.post(
@@ -49,7 +49,7 @@ export async function examScoresRoutes(app: FastifyInstance) {
     }
   );
 
-  // Get exam scores for a student (all roles — parents restricted to own children)
+  // Get exam scores for a student (all roles â€” parents restricted to own children)
   app.get(
     "/students/:studentId/exam-scores",
     { preHandler: [app.authenticate, app.tenantScope()] },

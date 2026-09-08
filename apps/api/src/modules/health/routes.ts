@@ -1,5 +1,5 @@
-import type { FastifyInstance } from "fastify";
-import { systemPrisma } from "@school/db";
+﻿import type { FastifyInstance } from "fastify";
+import { systemPrisma } from "@iskool/db";
 
 export async function healthRoutes(app: FastifyInstance) {
   app.get("/health", async () => ({ status: "ok", ts: new Date().toISOString() }));

@@ -1,4 +1,4 @@
-import Fastify from "fastify";
+﻿import Fastify from "fastify";
 import cors from "@fastify/cors";
 import { config } from "./config.js";
 import { authPlugin } from "./plugins/auth.js";
@@ -13,7 +13,6 @@ import { communicationRoutes } from "./modules/communication/routes.js";
 import { schoolRoutes } from "./modules/school/routes.js";
 import { userRoutes } from "./modules/users/routes.js";
 import { examScoresRoutes } from "./modules/examscores/routes.js";
-import { featureFlagRoutes } from "./modules/admin/feature-flags.js";
 import { aiProxyRoutes } from "./modules/ai/routes.js";
 import { eventRoutes } from "./modules/events/routes.js";
 import { notificationRoutes } from "./modules/notifications/routes.js";
@@ -41,7 +40,6 @@ export async function buildApp() {
       await api.register(financeRoutes);
       await api.register(communicationRoutes);
       await api.register(examScoresRoutes);
-      await api.register(featureFlagRoutes);
       await api.register(aiProxyRoutes);
       await api.register(eventRoutes);
       await api.register(notificationRoutes);

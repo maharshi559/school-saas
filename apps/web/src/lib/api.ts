@@ -1,4 +1,4 @@
-import type { AuthResponse } from "@school/shared";
+﻿import type { AuthResponse } from "@iskool/shared";
 
 const BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 const PREFIX = `${BASE}/api/v1`;
@@ -17,7 +17,7 @@ export function setToken(token: string | null) {
     if (token) localStorage.setItem(TOKEN_KEY, token);
     else localStorage.removeItem(TOKEN_KEY);
   } catch {
-    /* private mode — session stays in memory only */
+    /* private mode â€” session stays in memory only */
   }
 }
 

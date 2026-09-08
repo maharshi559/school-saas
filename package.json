@@ -1,8 +1,8 @@
 {
-  "name": "school-saas",
+  "name": "iskool",
   "private": true,
   "version": "0.0.0",
-  "description": "Multi-tenant school management SaaS for the Indian K-12 market",
+  "description": "Multi-tenant school management platform for the Indian K-12 market",
   "type": "module",
   "engines": {
     "node": ">=20.19"
@@ -13,15 +13,15 @@
   ],
   "scripts": {
     "dev": "npm-run-all --parallel dev:api dev:web dev:ai",
-    "dev:api": "npm run dev --workspace @school/api",
-    "dev:web": "npm run dev --workspace @school/web",
+    "dev:api": "npm run dev --workspace @iskool/api",
+    "dev:web": "npm run dev --workspace @iskool/web",
     "dev:ai": "uvicorn apps/ai/main:app --reload --port 4001 --env-file .env",
     "build": "npm run build --workspaces --if-present",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
-    "db:generate": "npm run generate --workspace @school/db",
-    "db:migrate": "npm run migrate --workspace @school/db",
-    "db:seed": "npm run seed --workspace @school/db",
+    "db:generate": "npm run generate --workspace @iskool/db",
+    "db:migrate": "npm run migrate --workspace @iskool/db",
+    "db:seed": "npm run seed --workspace @iskool/db",
     "infra:up": "docker compose up -d",
     "infra:down": "docker compose down"
   },

@@ -1,6 +1,7 @@
 import React from "react";
+import { Button } from "../components/ui/button.js";
+import { Alert, AlertDescription } from "../components/ui/alert.js";
 
-// Empty State Component
 export function EmptyState({
   icon,
   title,
@@ -16,22 +17,12 @@ export function EmptyState({
     <div className="flex flex-col items-center justify-center py-16 px-4">
       {icon && <div className="mb-4 text-5xl opacity-30">{icon}</div>}
       <h3 className="text-lg font-semibold text-foreground mb-2">{title}</h3>
-      <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">
-        {description}
-      </p>
-      {action && (
-        <button
-          onClick={action.onClick}
-          className="px-4 py-2 rounded-md bg-accent text-accent-foreground text-sm font-medium hover:opacity-90"
-        >
-          {action.label}
-        </button>
-      )}
+      <p className="text-sm text-muted-foreground text-center max-w-sm mb-6">{description}</p>
+      {action && <Button onClick={action.onClick}>{action.label}</Button>}
     </div>
   );
 }
 
-// Loading State Component
 export function LoadingState({ message = "Loading..." }: { message?: string }) {
   return (
     <div className="flex flex-col items-center justify-center py-12">
@@ -41,7 +32,6 @@ export function LoadingState({ message = "Loading..." }: { message?: string }) {
   );
 }
 
-// Form Field Wrapper Component
 export function FormField({
   label,
   error,
@@ -68,30 +58,28 @@ export function FormField({
   );
 }
 
-// Status Badge Component
+const badgeVariants = {
+  default: "bg-muted text-foreground border-border",
+  success: "bg-accent/10 text-accent border-accent/30",
+  warning: "bg-warning/10 text-warning border-warning/30",
+  destructive: "bg-destructive/10 text-destructive border-destructive/30",
+  info: "bg-muted text-muted-foreground border-border",
+} as const;
+
 export function StatusBadge({
   status,
-  variant,
+  variant = "default",
 }: {
   status: string;
-  variant?: "default" | "success" | "warning" | "destructive" | "info";
+  variant?: keyof typeof badgeVariants;
 }) {
-  const variantClasses = {
-    default: "bg-muted text-foreground",
-    success: "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
-    warning: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
-    destructive: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
-    info: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
-  };
-
   return (
-    <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-medium ${variantClasses[variant || "default"]}`}>
+    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${badgeVariants[variant]}`}>
       {status}
     </span>
   );
 }
 
-// Section Header Component
 export function SectionHeader({
   title,
   subtitle,
@@ -112,52 +100,23 @@ export function SectionHeader({
   );
 }
 
-// Responsive Grid Component
-export function ResponsiveGrid({
-  children,
-  columns = 1,
-}: {
-  children: React.ReactNode;
-  columns?: 1 | 2 | 3 | 4;
-}) {
-  const colClasses = {
-    1: "grid-cols-1",
-    2: "md:grid-cols-2",
-    3: "md:grid-cols-2 lg:grid-cols-3",
-    4: "md:grid-cols-2 lg:grid-cols-4",
-  };
-
+export function ResponsiveGrid({ children, columns = 1 }: { children: React.ReactNode; columns?: 1 | 2 | 3 | 4 }) {
+  const colClasses = { 1: "grid-cols-1", 2: "md:grid-cols-2", 3: "md:grid-cols-2 lg:grid-cols-3", 4: "md:grid-cols-2 lg:grid-cols-4" };
   return <div className={`grid ${colClasses[columns]} gap-4`}>{children}</div>;
 }
 
-// Success Message Component
 export function SuccessMessage({ message }: { message: string }) {
-  return (
-    <div className="rounded-lg bg-green-50 dark:bg-green-950 border border-green-200 dark:border-green-800 p-4">
-      <p className="text-sm text-green-800 dark:text-green-200">{message}</p>
-    </div>
-  );
+  return <Alert variant="success"><AlertDescription>{message}</AlertDescription></Alert>;
 }
 
-// Error Message Component
 export function ErrorMessage({ message }: { message: string }) {
-  return (
-    <div className="rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 p-4">
-      <p className="text-sm text-red-800 dark:text-red-200">{message}</p>
-    </div>
-  );
+  return <Alert variant="destructive"><AlertDescription>{message}</AlertDescription></Alert>;
 }
 
-// Info Message Component
 export function InfoMessage({ message }: { message: string }) {
-  return (
-    <div className="rounded-lg bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 p-4">
-      <p className="text-sm text-blue-800 dark:text-blue-200">{message}</p>
-    </div>
-  );
+  return <Alert><AlertDescription>{message}</AlertDescription></Alert>;
 }
 
-// Back Button Component - Mobile only
 export function BackButton({ onClick }: { onClick: () => void }) {
   return (
     <button

@@ -1,8 +1,8 @@
-import { systemPrisma, runWithTenant, prisma } from "../src/index.js";
+﻿import { systemPrisma, runWithTenant, prisma } from "../src/index.js";
 
 /**
  * Dev seed: one demo school with an admin, a teacher (approved), one class
- * section, and a couple of students with guardians. Idempotent-ish — safe to
+ * section, and a couple of students with guardians. Idempotent-ish â€” safe to
  * re-run after `prisma migrate reset`.
  */
 async function main() {
@@ -192,11 +192,11 @@ async function main() {
     }
   });
 
-  console.log(`Seeded tenant "${tenant.name}" (${tenant.slug}) — school code ${tenant.schoolCode}`);
+  console.log(`Seeded tenant "${tenant.name}" (${tenant.slug}) â€” school code ${tenant.schoolCode}`);
   console.log("Test login numbers:");
   console.log("  Platform Admin: +919999900000");
-  console.log("  India - School Admin: +919999900001 · Teacher: +919999900002 · Parent: +919999900003");
-  console.log("  US    - School Admin: +15551234001 · Teacher: +15551234002 · Parent: +15551234003");
+  console.log("  India - School Admin: +919999900001 Â· Teacher: +919999900002 Â· Parent: +919999900003");
+  console.log("  US    - School Admin: +15551234001 Â· Teacher: +15551234002 Â· Parent: +15551234003");
 }
 
 main()

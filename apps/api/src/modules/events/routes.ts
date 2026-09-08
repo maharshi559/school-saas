@@ -1,5 +1,5 @@
-import type { FastifyInstance } from "fastify";
-import { prisma as _prisma } from "@school/db";
+﻿import type { FastifyInstance } from "fastify";
+import { prisma as _prisma } from "@iskool/db";
 import { z } from "zod";
 
 // cast until SchoolEvent migration runs

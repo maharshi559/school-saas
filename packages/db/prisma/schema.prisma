@@ -170,6 +170,9 @@ model User {
   id          String   @id @default(cuid())
   phone       String   @unique
   displayName String?
+  firstName   String?
+  lastName    String?
+  email       String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
@@ -212,15 +215,24 @@ model OtpChallenge {
 // ─────────────────────────────  Tenant  ───────────────────────────
 
 model Tenant {
-  id         String       @id @default(cuid())
-  name       String
-  slug       String       @unique
-  schoolCode String       @unique
-  phone      String?
-  status     TenantStatus @default(TRIAL)
-  createdAt  DateTime     @default(now())
-  updatedAt  DateTime     @updatedAt
-  deletedAt  DateTime?
+  id              String       @id @default(cuid())
+  name            String
+  slug            String       @unique
+  schoolCode      String       @unique
+  phone           String?
+  email           String?
+  address         String?
+  city            String?
+  state           String?
+  pincode         String?
+  website         String?
+  schoolType      String?
+  board           String?
+  establishedYear Int?
+  status          TenantStatus @default(TRIAL)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  deletedAt       DateTime?
 
   memberships    Membership[]
   userInvites    UserInvite[]

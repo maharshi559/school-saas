@@ -20,3 +20,4 @@ packages/db/prisma/*.db
 
 # vite / pwa
 apps/web/dev-dist/
+packages/db/.env

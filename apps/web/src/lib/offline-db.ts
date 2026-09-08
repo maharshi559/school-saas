@@ -1,5 +1,5 @@
-import Dexie, { type EntityTable } from "dexie";
-import type { AttendanceStatus } from "@school/shared";
+﻿import Dexie, { type EntityTable } from "dexie";
+import type { AttendanceStatus } from "@iskool/shared";
 
 /**
  * Offline-first attendance queue. Teachers mark attendance into IndexedDB; a

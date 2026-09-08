@@ -1,10 +1,10 @@
-import type { FastifyInstance } from "fastify";
-import { prisma, systemPrisma } from "@school/db";
+﻿import type { FastifyInstance } from "fastify";
+import { prisma, systemPrisma } from "@iskool/db";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 
 export async function userRoutes(app: FastifyInstance) {
-  // ────────────────────── User Invites ──────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ User Invites â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   // Create user invite (School admin only)
   app.post(

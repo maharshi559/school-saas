@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+﻿import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
@@ -21,8 +21,8 @@ export default defineConfig({
         navigateFallback: "index.html",
       },
       manifest: {
-        name: "School SaaS",
-        short_name: "School",
+        name: "iskool",
+        short_name: "iskool",
         description: "School management for admins, teachers and parents",
         theme_color: "#000000",
         background_color: "#fafafa",

@@ -1,7 +1,7 @@
-import type { FastifyInstance, FastifyRequest } from "fastify";
-import { prisma } from "@school/db";
+﻿import type { FastifyInstance, FastifyRequest } from "fastify";
+import { prisma } from "@iskool/db";
 
-// In-memory SSE connections: userId → Set of response objects
+// In-memory SSE connections: userId â†’ Set of response objects
 // ponytail: single-instance map; swap for Redis pub/sub when scaling horizontally
 const connections = new Map<string, Set<any>>();
 
@@ -40,7 +40,7 @@ export async function createNotification(params: {
 }
 
 export async function notificationRoutes(app: FastifyInstance) {
-  // ── SSE stream ──────────────────────────────────────────────────────────────
+  // â”€â”€ SSE stream â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.get(
     "/notifications/stream",
     { preHandler: [app.authenticate] },
@@ -79,12 +79,12 @@ export async function notificationRoutes(app: FastifyInstance) {
         if (connections.get(userId)?.size === 0) connections.delete(userId);
       });
 
-      // Keep the handler open — never resolve
+      // Keep the handler open â€” never resolve
       await new Promise(() => {});
     }
   );
 
-  // ── List notifications (paginated) ─────────────────────────────────────────
+  // â”€â”€ List notifications (paginated) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.get(
     "/notifications",
     { preHandler: [app.authenticate] },
@@ -108,7 +108,7 @@ export async function notificationRoutes(app: FastifyInstance) {
     }
   );
 
-  // ── Mark one as read ────────────────────────────────────────────────────────
+  // â”€â”€ Mark one as read â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.patch(
     "/notifications/:id/read",
     { preHandler: [app.authenticate] },
@@ -123,7 +123,7 @@ export async function notificationRoutes(app: FastifyInstance) {
     }
   );
 
-  // ── Mark all as read ────────────────────────────────────────────────────────
+  // â”€â”€ Mark all as read â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.patch(
     "/notifications/read-all",
     { preHandler: [app.authenticate] },

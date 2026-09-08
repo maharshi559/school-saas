@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Shared enums mirrored in the Prisma schema. Keep the string values identical
  * on both sides so API payloads round-trip without mapping.
  */
@@ -17,7 +17,7 @@ export const ATTENDANCE_STATUS = ["PRESENT", "ABSENT", "LATE", "EXCUSED"] as con
 export type AttendanceStatus = (typeof ATTENDANCE_STATUS)[number];
 
 /**
- * DPDP Act: consent is captured per Parent–Student pair, with separate scopes.
+ * DPDP Act: consent is captured per Parentâ€“Student pair, with separate scopes.
  * A single blanket checkbox is explicitly not sufficient.
  */
 export const CONSENT_SCOPE = [

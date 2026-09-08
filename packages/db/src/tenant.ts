@@ -1,4 +1,4 @@
-import { AsyncLocalStorage } from "node:async_hooks";
+﻿import { AsyncLocalStorage } from "node:async_hooks";
 import { Prisma } from "@prisma/client";
 
 /**
@@ -10,7 +10,7 @@ import { Prisma } from "@prisma/client";
  *   await runWithTenant(tenantId, () => prisma.student.findMany())
  *
  * Anything outside a `runWithTenant` scope may only touch GLOBAL_MODELS. Touching
- * a tenant-scoped model with no tenant in context throws — that is a bug, not a
+ * a tenant-scoped model with no tenant in context throws â€” that is a bug, not a
  * silent full-table scan.
  */
 

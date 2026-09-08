@@ -1,5 +1,5 @@
-import type { FastifyInstance } from "fastify";
-import { prisma } from "@school/db";
+﻿import type { FastifyInstance } from "fastify";
+import { prisma } from "@iskool/db";
 import { z } from "zod";
 
 import { config } from "../../config.js";
@@ -25,7 +25,7 @@ async function callAI(path: string, body: unknown): Promise<unknown> {
 }
 
 export async function aiProxyRoutes(app: FastifyInstance) {
-  // ── Attendance flags ────────────────────────────────────────────────────────
+  // â”€â”€ Attendance flags â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.get(
     "/ai/attendance/flags",
     { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN", "PRINCIPAL", "TEACHER"])] },
@@ -40,7 +40,7 @@ export async function aiProxyRoutes(app: FastifyInstance) {
     }
   );
 
-  // ── Fee reminder draft ──────────────────────────────────────────────────────
+  // â”€â”€ Fee reminder draft â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post(
     "/ai/finance/draft-reminder",
     { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN", "PRINCIPAL"])] },
@@ -60,7 +60,7 @@ export async function aiProxyRoutes(app: FastifyInstance) {
     }
   );
 
-  // ── Exam insights ───────────────────────────────────────────────────────────
+  // â”€â”€ Exam insights â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post(
     "/ai/exam/insights",
     { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN", "PRINCIPAL", "TEACHER"])] },
@@ -82,7 +82,7 @@ export async function aiProxyRoutes(app: FastifyInstance) {
     }
   );
 
-  // ── Communication draft ─────────────────────────────────────────────────────
+  // â”€â”€ Communication draft â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   app.post(
     "/ai/communication/draft",
     { preHandler: [app.authenticate, app.tenantScope(["SCHOOL_ADMIN", "PRINCIPAL", "TEACHER"])] },
@@ -104,7 +104,7 @@ export async function aiProxyRoutes(app: FastifyInstance) {
     }
   );
 
-  // ── AI communication suggestions based on upcoming events ──────────────────
+  // â”€â”€ AI communication suggestions based on upcoming events â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // GET /ai/communication/suggestions?days=30
   // Queries upcoming school events, sends to AI, gets back ready-to-use drafts.
   // Also pushes an in-app notification to the requesting admin.

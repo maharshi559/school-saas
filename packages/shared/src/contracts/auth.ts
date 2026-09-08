@@ -1,7 +1,7 @@
-import { z } from "zod";
+﻿import { z } from "zod";
 import { ROLES } from "../roles.js";
 
-/** E.164 format: +CC followed by 6–15 digits. Accepts any country code.
+/** E.164 format: +CC followed by 6â€“15 digits. Accepts any country code.
     Bare digits (10+) normalized to +91 for backward compat, else +1 (US). */
 export const phoneSchema = z
   .string()
@@ -25,7 +25,7 @@ export type OtpRequest = z.infer<typeof otpRequestSchema>;
 
 export const otpVerifySchema = z.object({
   phone: phoneSchema,
-  code: z.string().regex(/^\d{4,6}$/, "OTP must be 4–6 digits"),
+  code: z.string().regex(/^\d{4,6}$/, "OTP must be 4â€“6 digits"),
 });
 export type OtpVerify = z.infer<typeof otpVerifySchema>;
 
@@ -33,6 +33,7 @@ export const sessionUserSchema = z.object({
   id: z.string(),
   phone: z.string(),
   displayName: z.string().nullable(),
+  appRoles: z.array(z.string()).default([]),
   memberships: z.array(
     z.object({
       tenantId: z.string(),

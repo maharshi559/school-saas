@@ -1,13 +1,17 @@
-import fp from "fastify-plugin";
+﻿import fp from "fastify-plugin";
 import fastifyJwt from "@fastify/jwt";
 import type { FastifyReply, FastifyRequest, preHandlerHookHandler } from "fastify";
-import { systemPrisma, enterTenantContext, type Role } from "@school/db";
+import { systemPrisma, enterTenantContext, type Role } from "@iskool/db";
 import { config } from "../config.js";
 
 export type RequestUser = {
   id: string;
   phone: string;
   displayName: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  appRoles: string[];
   memberships: { tenantId: string; tenantName: string; role: Role; status: string }[];
 };
 
@@ -18,7 +22,7 @@ declare module "fastify" {
     /**
      * preHandler factory: require an ACTIVE membership in the tenant named by the
      * `x-tenant-id` header, optionally restricted to `roles`. Enters the tenant
-     * scope so `@school/db`'s `prisma` is filtered for the rest of the request.
+     * scope so `@iskool/db`'s `prisma` is filtered for the rest of the request.
      */
     tenantScope: (roles?: Role[]) => preHandlerHookHandler;
     /**
@@ -43,14 +47,25 @@ declare module "@fastify/jwt" {
 async function loadUser(userId: string): Promise<RequestUser | null> {
   const user = await systemPrisma.user.findUnique({
     where: { id: userId },
-    include: { memberships: { include: { tenant: true } } },
+    include: { memberships: { include: { tenant: true } }, roles: { where: { revokedAt: null } } },
   });
   if (!user) return null;
+  const u = user as any;
+  const dbRoles: string[] = u.roles.map((r: any) => r.role);
+  // Bootstrap: phones listed in ADMIN_PHONES env var are always APP_ADMIN even without a DB entry
+  const adminPhones = (process.env.ADMIN_PHONES ?? "+919999900000").split(",").map((p: string) => p.trim());
+  const appRoles = adminPhones.includes(u.phone) && !dbRoles.includes("APP_ADMIN")
+    ? [...dbRoles, "APP_ADMIN"]
+    : dbRoles;
   return {
-    id: user.id,
-    phone: user.phone,
-    displayName: user.displayName,
-    memberships: user.memberships.map((m) => ({
+    id: u.id,
+    phone: u.phone,
+    displayName: u.displayName,
+    firstName: u.firstName ?? null,
+    lastName: u.lastName ?? null,
+    email: u.email ?? null,
+    appRoles,
+    memberships: u.memberships.map((m: any) => ({
       tenantId: m.tenantId,
       tenantName: m.tenant.name,
       role: m.role,
@@ -107,11 +122,7 @@ export const authPlugin = fp(
         if (!request.currentUser) {
           return reply.code(401).send({ error: "unauthorized" });
         }
-        const userRoles = await systemPrisma.userRole.findMany({
-          where: { userId: request.currentUser.id, revokedAt: null },
-          select: { role: true },
-        });
-        const hasRole = userRoles.some((r) => roles.includes(r.role as any));
+        const hasRole = request.currentUser.appRoles.some((r) => roles.includes(r as any));
         if (!hasRole) {
           return reply.code(403).send({ error: "forbidden", message: "App-level role required" });
         }

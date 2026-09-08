@@ -1,9 +1,9 @@
-import type { FastifyInstance } from "fastify";
-import { prisma } from "@school/db";
+﻿import type { FastifyInstance } from "fastify";
+import { prisma } from "@iskool/db";
 import { z } from "zod";
 
 export async function schoolRoutes(app: FastifyInstance) {
-  // ────────────────────── Classes ──────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Classes â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   // Get all class levels
   app.get(
@@ -122,7 +122,7 @@ export async function schoolRoutes(app: FastifyInstance) {
     }
   );
 
-  // ────────────────────── Teachers ──────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Teachers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   // Get all teachers in school
   app.get(
@@ -178,7 +178,7 @@ export async function schoolRoutes(app: FastifyInstance) {
     }
   );
 
-  // ────────────────────── Students ──────────────────────
+  // â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ Students â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   // Get students by class section
   app.get(

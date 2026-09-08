@@ -1,5 +1,5 @@
-import type { FastifyInstance } from "fastify";
-import { systemPrisma } from "@school/db";
+﻿import type { FastifyInstance } from "fastify";
+import { systemPrisma } from "@iskool/db";
 import { z } from "zod";
 
 const ADMIN_PHONES = process.env.ADMIN_PHONES?.split(",") || ["+919999900000"];

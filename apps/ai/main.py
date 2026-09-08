@@ -1,5 +1,5 @@
 """
-School AI Service — attendance flags, fee reminders, exam insights, message drafts.
+iskool AI Service — attendance flags, fee reminders, exam insights, message drafts.
 
 LLM backend (set via env):
   LLM_PROVIDER=ollama   → http://localhost:11434  (default, fully free)
@@ -83,7 +83,7 @@ def require_service_key(x_service_key: str = Header(default="")):
 
 # ── App ───────────────────────────────────────────────────────────────────────
 
-app = FastAPI(title="School AI Service", docs_url="/docs")
+app = FastAPI(title="iskool AI Service", docs_url="/docs")
 
 
 @app.get("/health")

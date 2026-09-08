@@ -1,5 +1,5 @@
-import type { FastifyInstance } from "fastify";
-import { prisma, systemPrisma } from "@school/db";
+﻿import type { FastifyInstance } from "fastify";
+import { prisma, systemPrisma } from "@iskool/db";
 import { z } from "zod";
 
 const createAttendanceSchema = z.object({

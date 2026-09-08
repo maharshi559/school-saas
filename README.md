@@ -1,8 +1,8 @@
-# School Management SaaS
+# iskool
 
-Multi-tenant SaaS for school process management, targeting India's K-12 market
-(budget private, rural, and tier-2/3 schools). See the `school-management-saas`
-skill for the full product/architecture rationale.
+Multi-tenant school management platform for India's K-12 market (budget private,
+rural, and tier-2/3 schools). See the `school-management-saas` skill for the full
+product/architecture rationale.
 
 ## Stack
 
@@ -18,11 +18,11 @@ skill for the full product/architecture rationale.
 
 ```
 apps/
-  api/     Fastify API  (@school/api)
-  web/     React PWA     (@school/web)
+  api/     Fastify API  (@iskool/api)
+  web/     React PWA     (@iskool/web)
 packages/
-  db/      Prisma schema + tenant-isolation extension  (@school/db)
-  shared/  Zod contracts, enums, roles                 (@school/shared)
+  db/      Prisma schema + tenant-isolation extension  (@iskool/db)
+  shared/  Zod contracts, enums, roles                 (@iskool/shared)
 ```
 
 ## First-time setup
@@ -52,7 +52,7 @@ Dev login: request an OTP for `9999900001` (admin), `9999900002` (teacher) or
 ### Local Postgres instead (optional, needs Docker)
 
 `docker-compose.yml` runs Postgres + Redis. If you use it, set
-`DATABASE_URL="postgresql://school:school@localhost:5432/school_saas?sslmode=disable"`
+`DATABASE_URL="postgresql://school:school@localhost:5432/iskool?sslmode=disable"`
 and run `npm run infra:up` before the migrate step.
 
 ## Tenant isolation — read before adding a model

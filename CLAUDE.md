@@ -52,7 +52,7 @@ context — consult it before proposing any deviation.
 ## Conventions
 
 - ESM everywhere (`"type": "module"`), `.js` import specifiers in TS.
-- Shared request/response shapes live in `@school/shared` as Zod schemas.
+- Shared request/response shapes live in `@iskool/shared` as Zod schemas.
 - Fastify modules under `apps/api/src/modules/<name>/routes.ts`.
 - npm workspaces (no pnpm/turbo). Run scripts from repo root.
 

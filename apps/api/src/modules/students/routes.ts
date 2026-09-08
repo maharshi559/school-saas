@@ -1,6 +1,6 @@
-import type { FastifyInstance } from "fastify";
-import { prisma } from "@school/db";
-import { createStudentSchema, listQuerySchema } from "@school/shared";
+﻿import type { FastifyInstance } from "fastify";
+import { prisma } from "@iskool/db";
+import { createStudentSchema, listQuerySchema } from "@iskool/shared";
 import { z } from "zod";
 
 const updateStudentSchema = z.object({
@@ -13,7 +13,7 @@ const updateStudentSchema = z.object({
 
 /**
  * Every handler here runs inside a tenant scope established by `tenantScope()`,
- * so `prisma.student.*` is automatically filtered to the caller's school — there
+ * so `prisma.student.*` is automatically filtered to the caller's school â€” there
  * is deliberately no `where: { tenantId }` written by hand.
  */
 export async function studentRoutes(app: FastifyInstance) {

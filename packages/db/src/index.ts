@@ -1,4 +1,4 @@
-export { prisma, systemPrisma } from "./client.js";
+﻿export { prisma, systemPrisma } from "./client.js";
 export type { TenantPrisma } from "./client.js";
 export { runWithTenant, enterTenantContext, currentTenantId, GLOBAL_MODELS } from "./tenant.js";
 export { Prisma } from "@prisma/client";

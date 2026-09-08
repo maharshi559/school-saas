@@ -4,25 +4,25 @@
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: school_saas_pg
+    container_name: iskool_pg
     restart: unless-stopped
     environment:
-      POSTGRES_USER: school
-      POSTGRES_PASSWORD: school
-      POSTGRES_DB: school_saas
+      POSTGRES_USER: iskool
+      POSTGRES_PASSWORD: iskool
+      POSTGRES_DB: iskool
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U school -d school_saas"]
+      test: ["CMD-SHELL", "pg_isready -U iskool -d iskool"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   redis:
     image: redis:7-alpine
-    container_name: school_saas_redis
+    container_name: iskool_redis
     restart: unless-stopped
     ports:
       - "6379:6379"

@@ -1,5 +1,5 @@
 {
-  "name": "@school/api",
+  "name": "@iskool/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,13 +8,14 @@
     "dev": "tsx watch --env-file=../../.env src/server.ts",
     "build": "tsc",
     "start": "node --env-file=../../.env dist/server.js",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "node --env-file=../../.env --import tsx/esm --test src/modules/admin/admin.test.ts"
   },
   "dependencies": {
     "@fastify/cors": "10.0.1",
     "@fastify/jwt": "9.0.1",
-    "@school/db": "*",
-    "@school/shared": "*",
+    "@iskool/db": "*",
+    "@iskool/shared": "*",
     "fastify": "5.1.0",
     "fastify-plugin": "5.0.1",
     "pino-pretty": "13.0.0",

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { CheckCircle2, AlertCircle, Info, X } from "lucide-react";
 
 export type ToastType = "success" | "error" | "info";
 
@@ -8,76 +9,43 @@ export type Toast = {
   type: ToastType;
 };
 
-const CheckIcon = () => (
-  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <polyline points="20 6 9 17 4 12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
+const icons = {
+  success: CheckCircle2,
+  error: AlertCircle,
+  info: Info,
+};
 
-const ErrorIcon = () => (
-  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <circle cx="12" cy="12" r="10" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <line x1="12" y1="8" x2="12" y2="12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <line x1="12" y1="16" x2="12.01" y2="16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
+const styles = {
+  success: "bg-[rgb(16,185,129)] text-white",
+  error: "bg-[rgb(239,68,68)] text-white",
+  info: "bg-foreground text-background",
+};
 
-const InfoIcon = () => (
-  <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <circle cx="12" cy="12" r="10" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <line x1="12" y1="16" x2="12" y2="12" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <line x1="12" y1="8" x2="12.01" y2="8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-function ToastItem({ toast, onClose }: { toast: Toast; onClose: () => void }) {
-  useEffect(() => {
-    const timer = setTimeout(onClose, 4000);
-    return () => clearTimeout(timer);
-  }, [onClose]);
-
-  const styles = {
-    success: {
-      bg: "bg-accent/10",
-      border: "border-accent/30",
-      text: "text-accent",
-      icon: "text-accent",
-    },
-    error: {
-      bg: "bg-destructive/10",
-      border: "border-destructive/30",
-      text: "text-destructive",
-      icon: "text-destructive",
-    },
-    info: {
-      bg: "bg-foreground/10",
-      border: "border-foreground/30",
-      text: "text-foreground",
-      icon: "text-foreground",
-    },
-  };
-
-  const style = styles[toast.type];
-  const icons = {
-    success: <CheckIcon />,
-    error: <ErrorIcon />,
-    info: <InfoIcon />,
-  };
-
+export function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: string) => void }) {
   return (
-    <div className={`${style.bg} border ${style.border} rounded-lg px-4 py-3 flex items-center gap-3 animate-in fade-in slide-in-from-top-2`}>
-      <div className={style.icon}>{icons[toast.type]}</div>
-      <p className={`text-sm font-medium ${style.text}`}>{toast.message}</p>
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex flex-col items-center gap-2">
+      {toasts.map((toast) => (
+        <ToastItem key={toast.id} toast={toast} onRemove={() => onRemove(toast.id)} />
+      ))}
     </div>
   );
 }
 
-export function ToastContainer({ toasts, onRemove }: { toasts: Toast[]; onRemove: (id: string) => void }) {
+function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onRemove, 4000);
+    return () => clearTimeout(timer);
+  }, [onRemove]);
+
+  const Icon = icons[toast.type];
+
   return (
-    <div className="fixed top-6 right-6 z-50 space-y-2">
-      {toasts.map((toast) => (
-        <ToastItem key={toast.id} toast={toast} onClose={() => onRemove(toast.id)} />
-      ))}
+    <div className={`${styles[toast.type]} flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg min-w-max animate-in fade-in slide-in-from-bottom-2`}>
+      <Icon className="h-4 w-4 shrink-0" />
+      <p className="text-sm font-medium">{toast.message}</p>
+      <button onClick={onRemove} className="ml-2 opacity-70 hover:opacity-100">
+        <X className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }

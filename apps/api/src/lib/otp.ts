@@ -1,4 +1,4 @@
-import { createHash, randomInt, timingSafeEqual } from "node:crypto";
+﻿import { createHash, randomInt, timingSafeEqual } from "node:crypto";
 import { config } from "../config.js";
 
 export function generateOtp(): string {
@@ -18,7 +18,7 @@ export function verifyOtpHash(phone: string, code: string, hash: string): boolea
 /** Delivery adapter. Console in dev; swap in MSG91 for staging/prod. */
 export async function sendOtp(phone: string, code: string, log: { info: (o: unknown, m?: string) => void }): Promise<void> {
   if (config.OTP_PROVIDER === "console") {
-    log.info({ phone, code }, "OTP (console provider — not actually sent)");
+    log.info({ phone, code }, "OTP (console provider â€” not actually sent)");
     return;
   }
   // TODO: MSG91 flow API call using MSG91_AUTH_KEY / MSG91_OTP_TEMPLATE_ID.

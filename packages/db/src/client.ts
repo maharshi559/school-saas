@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+﻿import { PrismaClient } from "@prisma/client";
 import { tenantGuardExtension } from "./tenant.js";
 
 const makeBase = () =>
@@ -7,7 +7,7 @@ const makeBase = () =>
   });
 
 /**
- * `systemPrisma` — unscoped. Use ONLY for platform-level work: tenant
+ * `systemPrisma` â€” unscoped. Use ONLY for platform-level work: tenant
  * provisioning, billing, super-admin, and auth lookups on global tables
  * (User / OtpChallenge). It will happily read across every school.
  */
@@ -16,7 +16,7 @@ export const systemPrisma: PrismaClient = globalForPrisma.__systemPrisma ?? make
 if (process.env.NODE_ENV !== "production") globalForPrisma.__systemPrisma = systemPrisma;
 
 /**
- * `prisma` — tenant-guarded. Every query on a tenant-scoped model is filtered by
+ * `prisma` â€” tenant-guarded. Every query on a tenant-scoped model is filtered by
  * the tenantId in the current `runWithTenant()` scope; calling one outside a
  * scope throws. This is what request handlers should use.
  */
