@@ -10,5 +10,38 @@
       "Bash(cd /c/Projects/school-saas/packages/db && npm run migrate)",
       "Read(//c/Projects/school-saas/packages/db/**)"
     ]
+  },
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true,
+    "code-simplifier@claude-plugins-official": true,
+    "code-review@claude-plugins-official": true,
+    "playwright@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "npm run typecheck",
+            "continueOnError": true,
+            "statusMessage": "Type-checking..."
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "The user is trying to edit a file. Check if the file path matches patterns like .env or .env.* - if it does, respond with BLOCK in your first line, otherwise respond with ALLOW."
+          }
+        ]
+      }
+    ]
   }
 }
