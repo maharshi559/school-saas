@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "../../lib/api.js";
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card.js";
-import { Users, Users, Book, Grid } from "lucide-react";
+import { Users, Users2, Book, Grid } from "lucide-react";
 
 export function DashboardView({ membership }: { membership: any }) {
   const [stats, setStats] = useState({ totalStudents: 0, totalTeachers: 0, totalClasses: 0, totalSections: 0 });

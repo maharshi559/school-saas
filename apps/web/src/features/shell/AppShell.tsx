@@ -8,7 +8,7 @@ import { Alert, AlertDescription } from "../../components/ui/alert.js";
 import { Avatar } from "../../components/ui/avatar.js";
 import { useLanguage } from "../../lib/i18n.js";
 import { BackButton } from "../../lib/ui-helpers.js";
-import { LayoutDashboard, Users, Users, Book, CheckSquare2, MessageSquare, Wallet, Shield, Settings, Bell, Edit2, Sun, Moon } from "lucide-react";
+import { LayoutDashboard, Users, Users2, Book, CheckSquare2, MessageSquare, Wallet, Shield, Settings, Bell, Edit2, Sun, Moon } from "lucide-react";
 import { DashboardView } from "./DashboardView.js";
 import { StudentsView } from "./StudentsView.js";
 import { TeachersView } from "./TeachersView.js";
