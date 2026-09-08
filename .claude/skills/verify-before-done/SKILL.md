@@ -100,6 +100,86 @@ Only required if the change touches:
 
 ---
 
+## 📋 Form Error Checks (Frontend validation)
+
+**Mandatory for every form change**
+
+**Checklist:**
+- [ ] All required fields marked visually (red asterisk or label)
+- [ ] Validation errors appear inline below field (not in console)
+- [ ] Error messages specific (not "Error" or "Bad input")
+- [ ] Submit button disabled until form valid
+- [ ] No `console.log()` for production (dev only)
+- [ ] Console shows errors for debugging (dev, not prod)
+- [ ] Error messages match backend error messages
+- [ ] Form clears errors when user corrects input
+- [ ] Mobile: error text readable on small screens
+
+**How to verify:**
+
+```bash
+# 1. Open DevTools → Console tab
+# 2. Load the form, check console is clean (no errors/warnings)
+# 3. Try to submit empty form:
+#    ✅ Inline error appears: "Phone required"
+#    ❌ Only console.log() (user doesn't see)
+# 4. Enter invalid phone "123":
+#    ✅ Error updates: "Phone must be +91 followed by 10 digits"
+#    ✅ Submit button disabled
+# 5. Enter valid phone:
+#    ✅ Error disappears
+#    ✅ Submit button enabled
+# 6. Test on mobile (DevTools → Mobile view):
+#    ✅ Errors still readable and positioned correctly
+```
+
+**Example: Good Form Validation**
+```tsx
+// ✅ Good: Errors visible, specific, inline
+<form>
+  <div>
+    <label>Phone *</label>
+    <input 
+      value={phone}
+      onChange={(e) => {
+        setPhone(e.target.value);
+        // Clear error when user starts typing
+        if (errors.phone) setErrors(prev => ({ ...prev, phone: null }));
+      }}
+      aria-invalid={!!errors.phone}
+    />
+    {errors.phone && (
+      <span className="text-destructive text-sm">{errors.phone}</span>
+    )}
+  </div>
+  
+  <button type="submit" disabled={!isFormValid}>
+    Register
+  </button>
+</form>
+
+// Console output:
+// ✅ Nothing logged in production
+// (or only: "Form validation triggered" in dev)
+```
+
+**Example: Bad Form Validation**
+```tsx
+// ❌ Bad: Error only in console, user doesn't see
+<form>
+  <input value={phone} />
+  <button onClick={() => {
+    if (!phone.match(/^\+91\d{10}$/)) {
+      console.log("Invalid phone"); // ← User doesn't see this!
+    }
+  }}>
+    Submit
+  </button>
+</form>
+```
+
+---
+
 ## 🧪 Testing Checks (Feature/Bug fix)
 
 Required for:
@@ -146,6 +226,54 @@ curl -X POST http://localhost:4000/api/v1/<endpoint> \
   -H "Authorization: Bearer <token>" \
   -H "Content-Type: application/json" \
   -d '{ "field": "value" }'
+```
+
+---
+
+## 🔍 Payload Verification Checks (API endpoints)
+
+**Mandatory for every new endpoint or changed payload**
+
+**Checklist:**
+- [ ] Required fields validated (no optional required fields)
+- [ ] Field types enforced (string, number, boolean, enum)
+- [ ] Field constraints enforced (min/max length, pattern, range)
+- [ ] Invalid input rejected with specific error message
+- [ ] All field validations in Zod schema (no inline checks)
+- [ ] Error message reveals no sensitive data
+- [ ] Phone format: +91XXXXXXXXXX (India context)
+- [ ] Email format validated
+- [ ] Enum values documented
+
+**How to verify:**
+
+```bash
+# 1. Check Zod schema in routes file
+grep -A 20 "z.object" apps/api/src/modules/<name>/routes.ts
+
+# 2. Schema should include:
+CreateStudentSchema = z.object({
+  phone: z.string().regex(/^\+91\d{10}$/),  // ✅ Pattern
+  email: z.string().email().optional(),      // ✅ Optional
+  name: z.string().min(2).max(100),          // ✅ Constraints
+  classId: z.string().cuid(),                // ✅ Type
+  role: z.enum(['TEACHER', 'STUDENT']),      // ✅ Enum
+})
+
+# 3. Test invalid payloads:
+curl -X POST http://localhost:4000/api/v1/students \
+  -d '{ "phone": "123" }' \  # ❌ Too short
+# Should return: { error: "Phone must be +91 followed by 10 digits" }
+
+curl -X POST http://localhost:4000/api/v1/students \
+  -d '{ "name": "" }' \      # ❌ Empty
+# Should return: { error: "Name required, min 2 characters" }
+
+curl -X POST http://localhost:4000/api/v1/students \
+  -d '{ "role": "ADMIN" }' \ # ❌ Invalid enum
+# Should return: { error: "Role must be TEACHER or STUDENT" }
+
+# 4. Verify responses in DevTools Network tab
 ```
 
 ---
